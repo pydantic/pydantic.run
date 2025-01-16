@@ -1,18 +1,23 @@
 import importlib
 import traceback
+from typing import Any
 
 import micropip
+import re
+import tomllib
 
 logfire_configured = False
 
 async def main(user_code: str):
+    dependencies = script_dependencies(user_code)
+    if dependencies:
+        await micropip.install(dependencies)
+        importlib.invalidate_caches()
 
-    await micropip.install(['logfire'])
-    importlib.invalidate_caches()
+    if 'logfire' in dependencies:
+        prep_logfire()
 
-    prep_logfire()
-
-    exec(user_code)
+    exec(compile(user_code, 'user_code.py', 'exec'))
 
 
 def prep_logfire():
@@ -52,15 +57,26 @@ def prep_logfire():
     logfire.configure = custom_logfire_configure
     logfire_configured = True
 
-import re
-import tomllib
 
-REGEX = r'(?m)^# /// (?P<type>[a-zA-Z0-9-]+)$\s(?P<content>(^#(| .*)$\s)+)^# ///$'
+def script_dependencies(script: str) -> list[str]:
+    metadata = read_script_metadata(script)
+    if dependencies := metadata.get('dependencies'):
+        assert isinstance(dependencies, list), 'dependencies must be a list'
+        assert all(isinstance(dep, str) for dep in dependencies), 'dependencies must be a list of strings'
+        return dependencies
+    else:
+        return []
 
-def read(script: str) -> dict | None:
+
+def read_script_metadata(script: str) -> dict[str, Any]:
+    """read PEP 723 script metadata.
+
+    Copied from https://packaging.python.org/en/latest/specifications/inline-script-metadata/#reference-implementation
+    """
     name = 'script'
+    magic_comment_regex = r'(?m)^# /// (?P<type>[a-zA-Z0-9-]+)$\s(?P<content>(^#(| .*)$\s)+)^# ///$'
     matches = list(
-        filter(lambda m: m.group('type') == name, re.finditer(REGEX, script))
+        filter(lambda m: m.group('type') == name, re.finditer(magic_comment_regex, script))
     )
     if len(matches) > 1:
         raise ValueError(f'Multiple {name} blocks found')
@@ -71,7 +87,7 @@ def read(script: str) -> dict | None:
         )
         return tomllib.loads(content)
     else:
-        return None
+        return {}
 
 
 try:

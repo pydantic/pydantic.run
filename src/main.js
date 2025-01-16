@@ -11,6 +11,10 @@ const url = new URL(window.location);
 const base64Code = url.searchParams.get('code');
 
 const defaultCode = `\
+# /// script
+# dependencies = ["logfire"]
+# ///
+
 import logfire
 
 logfire.configure()
