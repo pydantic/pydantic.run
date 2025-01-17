@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>logfire.run</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>logfire.run</h1>
+        <aside>
+          Run Python in the browser, log with
+          <a href="https://pydantic.dev/logfore">logfire</a>.
+        </aside>
+      </header>
+      <section>
+        <div class="col code-area">
+          <div id="editor"></div>
+          <div class="right">
+            <button id="run">Run</button>
+          </div>
+        </div>
+        <div class="col">
+          <pre id="output"></pre>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
