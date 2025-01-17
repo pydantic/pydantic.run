@@ -57,7 +57,7 @@ async function load() {
 
   document.getElementById('run')!.addEventListener('click', () => {
     terminal_output = ''
-    outputEl.innerHTML = ''
+    outputEl.innerHTML = 'running python...'
     worker.postMessage(editor.getValue())
   })
 }
