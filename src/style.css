@@ -71,3 +71,7 @@ button {
 button:hover {
   background: #218838;
 }
+.loading {
+  opacity: 0.5;
+  margin: 5px 20px 10px;
+}
