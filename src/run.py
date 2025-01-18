@@ -10,7 +10,7 @@ import re
 import sys
 import traceback
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 import importlib.util
 
 import micropip  # noqa
@@ -25,10 +25,26 @@ _already_installed: set[str] = set()
 _logfire_configured = False
 
 
-async def install_deps(source_code: str) -> str | None:
-    dependencies = _find_pep723_dependencies(source_code)
+class File(TypedDict):
+    name: str
+    content: str
+    active: bool
+
+
+async def install_deps(files: list[File]) -> str | None:
+    cwd = Path.cwd()
+    for file in cwd.iterdir():
+        if file.name != 'run.py' and file.is_file():
+            file.unlink()
+    for file in files:
+        (cwd / file['name']).write_text(file['content'])
+
+    dependencies: set[str] = set()
+    active = next((file for file in files if file['active']), None)
+    if active:
+        dependencies = _find_pep723_dependencies(active['content'])
     if dependencies is None:
-        dependencies = await _find_import_dependencies(source_code)
+        dependencies = await _find_import_dependencies(files)
     new_dependencies = dependencies - _already_installed
     if new_dependencies:
         await micropip.install(new_dependencies)
@@ -40,10 +56,9 @@ async def install_deps(source_code: str) -> str | None:
     return json.dumps(list(_already_installed))
 
 
-def run_code(user_code: str) -> None:
+def run_code(file: str) -> None:
     try:
-        file_path = Path('user_code.py')
-        file_path.write_text(user_code)
+        file_path = Path(file)
         spec = importlib.util.spec_from_file_location('__main__', file_path)
         module = importlib.util.module_from_spec(spec)
         # sys.modules['__main__'] = module
@@ -137,14 +152,17 @@ def _read_pep723_metadata(script: str) -> dict[str, Any]:
         return {}
 
 
-async def _find_import_dependencies(source_code: str) -> set[str]:
+async def _find_import_dependencies(files: list[File]) -> set[str]:
     """Find dependencies in imports."""
-    try:
-        imports: list[str] = find_imports(source_code)
-    except SyntaxError:
-        return set()
-    else:
-        return _find_imports_to_install(imports)
+    deps: set[str] = set()
+    for file in files:
+        try:
+            imports: list[str] = find_imports(file['content'])
+        except SyntaxError:
+            pass
+        else:
+            deps.update(_find_imports_to_install(imports))
+    return deps
 
 
 def _find_imports_to_install(imports: list[str]) -> set[str]:

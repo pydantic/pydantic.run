@@ -1,9 +1,9 @@
 import { loadPyodide, PyodideInterface, version as pyodideVersion } from 'pyodide'
-import pythonCode from './main.py?raw'
+import pythonCode from './run.py?raw'
 import type { RunCode, WorkerResponse } from './types'
 
 self.onmessage = async ({ data }: { data: RunCode }) => {
-  const { user_code, warmup } = data
+  const { files, warmup } = data
   let msg = ''
   try {
     const [setupTime, pyodide] = await time(getPyodide())
@@ -11,9 +11,11 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
       msg += `Started Python in ${setupTime.toFixed(0)}ms, `
     }
     post({ kind: 'status', message: `${msg}Installing dependencies…` })
-    const options = { globals: pyodide.toPy({ user_code }) }
+
     const [installTime, installedJson] = await time(
-      pyodide.runPythonAsync('import main; main.install_deps(user_code)', options),
+      pyodide.runPythonAsync('import run; run.install_deps(files)', {
+        globals: pyodide.toPy({ files: files }),
+      }),
     )
     const installed = JSON.parse(installedJson as string)
     if (installed) {
@@ -27,7 +29,13 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
       return
     }
     post({ kind: 'status', message: `${msg}running code…` })
-    const [execTime] = await time(pyodide.runPythonAsync('import main; main.run_code(user_code)', options))
+
+    const activeFile = files.find((f) => f.active)!.name
+    const [execTime] = await time(
+      pyodide.runPythonAsync('import run; run.run_code(file)', {
+        globals: pyodide.toPy({ file: activeFile }),
+      }),
+    )
     postPrint()
     post({ kind: 'status', message: `${msg}ran code in ${execTime.toFixed(0)}ms` })
   } catch (err) {
@@ -55,8 +63,8 @@ async function getPyodide(): Promise<PyodideInterface> {
     await pyodide.loadPackage(['micropip', 'pygments'])
 
     const pathlib = pyodide.pyimport('pathlib')
-    pathlib.Path('main.py').write_text(pythonCode)
-    pyodide.pyimport('main')
+    pathlib.Path('run.py').write_text(pythonCode)
+    pyodide.pyimport('run')
 
     loadedPyodide = pyodide
   }

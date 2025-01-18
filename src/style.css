@@ -29,7 +29,7 @@ aside {
 }
 div.col {
   flex: 1;
-  padding: 10px 5px;
+  padding: 5px 5px 10px;
   overflow-y: scroll;
   overflow-x: hidden;
   border: 1px solid #aaa;
@@ -75,7 +75,7 @@ button:hover {
 }
 .status {
   color: #2490b5;
-  margin-bottom: 5px;
+  margin: 5px 0;
 }
 .installed {
   color: #777;
@@ -85,4 +85,42 @@ button:hover {
 }
 .output {
   overflow: auto;
+}
+.tabs {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #34364f;
+}
+.tab {
+  padding: 6px 8px 6px 15px;
+  cursor: pointer;
+  color: white;
+  border-top: 1px solid #34364f;
+  border-right: 1px solid #34364f;
+}
+.tab:hover {
+  background: #27293c;
+}
+.active {
+  background: #34364f !important;
+}
+.new {
+  padding: 8px 15px;
+  font-size: 1.4rem;
+  border: 1px solid transparent;
+}
+.new:hover {
+  border: 1px solid #705326;
+}
+.close {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 2px 6px;
+  font-size: 1.2rem;
+  border: 1px solid transparent;
+}
+.close:hover {
+  border: 1px solid #705326;
 }

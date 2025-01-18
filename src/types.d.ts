@@ -1,10 +1,11 @@
-export interface Worker {
-  postMessage(data: RunCode): void
-  onmessage: (event: { data: WorkerResponse }) => void
+export interface File {
+  name: string
+  content: string
+  active: boolean
 }
 
 export interface RunCode {
-  user_code: string
+  files: File[]
   warmup?: boolean
 }
 
