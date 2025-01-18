@@ -4,7 +4,7 @@ import Convert from 'ansi-to-html'
 import Editor from './editor'
 import Worker from './worker?worker'
 import defaultPythonCode from './default_code.py?raw'
-import type { WorkerResponse, RunCode } from './types'
+import type { WorkerResponse, RunCode, File } from './types'
 
 const decoder = new TextDecoder()
 const ansiConverter = new Convert()
@@ -18,19 +18,55 @@ export default function () {
   let worker: Worker
   let outputRef!: HTMLPreElement
 
-  function workerMessage(data: RunCode) {
+  const [files, setFiles] = createSignal<File[]>(getFiles())
+
+  function workerMessage(warmup: boolean = false) {
+    const data: RunCode = { files: files(), warmup }
     worker!.postMessage(data)
   }
 
-  function runCode(user_code: string) {
+  function runCode(newContent: string) {
+    setFiles((prev) =>
+      prev.map(({ name, content, active }) => {
+        if (active) {
+          return { name, content: newContent, active }
+        } else {
+          return { name, content, active }
+        }
+      }),
+    )
     setStatus('Launching Python...')
     setInstalled('')
     setOutputHtml('')
     terminalOutput = ''
-    workerMessage({ user_code })
+    workerMessage()
   }
 
-  const initialCode = getInitialCode()
+  // function changeTab(updateContent: string, newName: string) {
+  //   setFiles((prev) =>
+  //     prev.map(({ name, content, active }) => {
+  //       if (name == newName) {
+  //         return { name, content, active: true }
+  //       } else if (active) {
+  //         return { name, content: updateContent, active: false }
+  //       } else {
+  //         return { name, content, active }
+  //       }
+  //     }),
+  //   )
+  // }
+  //
+  // function newTab() {
+  //   const newFileName = getNewName(files())
+  //   if (newFileName) {
+  //     const file: File = { name: newFileName, content: '', active: true }
+  //     setFiles((prev) => [...prev.map(({ name, content }) => ({ name, content, active: false })), file])
+  //   }
+  // }
+  //
+  // function closeTab(name: string) {
+  //
+  // }
 
   onMount(() => {
     worker = new Worker()
@@ -51,7 +87,7 @@ export default function () {
       // scrolls to the bottom of the div
       outputRef.scrollTop = outputRef.scrollHeight
     }
-    workerMessage({ user_code: initialCode, warmup: true })
+    workerMessage(true)
   })
 
   return (
@@ -64,7 +100,7 @@ export default function () {
         <div id="counter"></div>
       </header>
       <section>
-        <Editor runCode={runCode} initialCode={initialCode} />
+        <Editor runCode={runCode} files={files} setFiles={setFiles} />
         <div class="col">
           <div class="status">{status()}</div>
           <div class="installed">{installed()}</div>
@@ -81,8 +117,9 @@ function escapeHTML(html: string): string {
   return escapeEl.innerHTML
 }
 
-function getInitialCode(): string {
+function getFiles(): File[] {
   const url = new URL(window.location.href)
   const base64Code = url.searchParams.get('code')
-  return base64Code ? atob(base64Code) : defaultPythonCode
+  const content = base64Code ? atob(base64Code) : defaultPythonCode
+  return [{ name: 'main.py', content, active: true }]
 }
