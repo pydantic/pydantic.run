@@ -75,3 +75,7 @@ button:hover {
   opacity: 0.5;
   margin: 5px 20px 10px;
 }
+#status {
+  padding-bottom: 20px;
+  color: cadetblue;
+}

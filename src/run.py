@@ -1,14 +1,22 @@
 import importlib
+import sys
 import traceback
+from pathlib import Path
 from typing import Any
+import importlib.util
 
+# noinspection PyUnresolvedReferences
 import micropip
 import re
 import tomllib
 
 logfire_configured = False
 
-async def main(user_code: str):
+
+async def main(user_code: str | None):
+    if user_code is None:
+        return
+
     dependencies = script_dependencies(user_code)
     if dependencies:
         await micropip.install(dependencies)
@@ -17,8 +25,28 @@ async def main(user_code: str):
     if 'logfire' in dependencies:
         prep_logfire()
 
-    exec(compile(user_code, 'user_code.py', 'exec'))
+    if user_code:
+        import_module_from_path(user_code)
 
+
+def import_module_from_path(user_code: str) -> None:
+    file_path = Path('user_code.py')
+    file_path.write_text(user_code)
+    spec = importlib.util.spec_from_file_location('__main__', file_path)
+    module = importlib.util.module_from_spec(spec)
+    # sys.modules['__main__'] = module
+    try:
+        spec.loader.exec_module(module)
+    except BaseException as exc:
+        print(filtered_traceback(exc), file=sys.stderr)
+
+
+def filtered_traceback(exc: BaseException) -> str:
+    # Retrieve the full traceback as a list of strings
+    tb_lines = traceback.format_exception(type(exc), exc, exc.__traceback__)
+
+    # Filter out the lines where file is not a real file - e.g. this code
+    return ''.join(line for line in tb_lines if not line.startswith('  File "<'))
 
 def prep_logfire():
     global logfire_configured

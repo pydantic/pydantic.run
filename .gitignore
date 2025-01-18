@@ -27,3 +27,5 @@ dist-ssr
 /scratch/
 /.venv/
 /.python-version
+*.py[cod]
+__pycache__/

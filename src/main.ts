@@ -1,34 +1,47 @@
-import './style.css'
-
 import Convert from 'ansi-to-html'
 
+import './style.css'
 import PyodideWorker from './worker?worker'
 import defaultPythonCode from './default_code.py?raw'
+import type { RunCode, WorkerResponse } from './messageTypes'
 
-async function load() {
-  const outputEl = document.getElementById('output')!
-  const decoder = new TextDecoder()
-  const ansi_converter = new Convert()
-  let terminal_output = ''
+const escapeEl = document.createElement('textarea')
+function escapeHTML(html: string): string {
+  escapeEl.textContent = html
+  return escapeEl.innerHTML
+}
 
-  const worker = new PyodideWorker()
-  worker.onmessage = ({ data }) => {
-    if (typeof data == 'string') {
-      terminal_output += data
-    } else {
-      for (let chunk of data) {
-        let arr = new Uint8Array(chunk)
-        let extra = decoder.decode(arr)
-        terminal_output += extra
-      }
+const statusEl = document.getElementById('status')!
+const outputEl = document.getElementById('output')!
+const decoder = new TextDecoder()
+const ansi_converter = new Convert()
+let terminal_output = ''
+
+const worker = new PyodideWorker()
+worker.onmessage = ({ data }: { data: WorkerResponse }) => {
+  if (data.kind == 'print') {
+    for (let chunk of data.data) {
+      let arr = new Uint8Array(chunk)
+      terminal_output += decoder.decode(arr)
     }
-    outputEl.innerHTML = ansi_converter.toHtml(terminal_output)
+    outputEl.innerHTML = ansi_converter.toHtml(escapeHTML(terminal_output))
     // scrolls to the bottom of the div
     outputEl.scrollIntoView(false)
+  } else {
+    statusEl.innerText = data.message
   }
-  worker.postMessage('')
+}
 
-  const monaco = await import('monaco-editor')
+function workerMessage(data: RunCode) {
+  worker.postMessage(data)
+}
+
+statusEl.innerText = 'Starting Python…'
+workerMessage({ user_code: null })
+
+async function loadEditor() {
+  // const monaco = await import('monaco-editor')
+  const { monaco } = await import('./monaco-editor-python')
   monaco.editor.defineTheme('custom-dark', {
     base: 'vs-dark',
     inherit: true,
@@ -55,11 +68,15 @@ async function load() {
     },
   })
 
-  document.getElementById('run')!.addEventListener('click', () => {
+  function run() {
     terminal_output = ''
-    outputEl.innerHTML = 'running python...'
-    worker.postMessage(editor.getValue())
-  })
+    statusEl.innerText = 'Running Python…'
+    worker.postMessage({ user_code: editor.getValue() })
+  }
+
+  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, run)
+
+  document.getElementById('run')!.addEventListener('click', run)
 }
 
-load()
+loadEditor()

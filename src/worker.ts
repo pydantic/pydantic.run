@@ -1,14 +1,23 @@
 import { loadPyodide, PyodideInterface, version as pyodideVersion } from 'pyodide'
 import runPyCode from './run.py?raw'
+import type { RunCode, WorkerResponse } from './messageTypes'
 
-self.onmessage = async ({ data }) => {
+self.onmessage = async ({ data }: { data: RunCode }) => {
+  const { user_code } = data
   try {
+    const startTime = performance.now()
     const pyodide = await getPyodide()
-    await pyodide.runPythonAsync(runPyCode, { globals: pyodide.toPy({ user_code: data }) })
-    post()
+    await pyodide.runPythonAsync(runPyCode, { globals: pyodide.toPy({ user_code }) })
+    postPrint()
+    if (user_code === null) {
+      post({ kind: 'status', message: 'Ready' })
+    } else {
+      const endTime = performance.now()
+      post({ kind: 'status', message: `Finished, execution time: ${(endTime - startTime).toFixed(2)}ms` })
+    }
   } catch (err) {
     console.error(err)
-    self.postMessage(`Error: ${err}\n`)
+    post({ kind: 'status', message: `Error: ${err}` })
   }
 }
 
@@ -66,7 +75,7 @@ function makeTtyOps() {
   }
 }
 
-let chunks: string[] = []
+let chunks: ArrayBuffer[] = []
 let last_post = 0
 
 function print(tty: any) {
@@ -75,13 +84,17 @@ function print(tty: any) {
     tty.output = []
     const now = performance.now()
     if (now - last_post > 100) {
-      post()
+      postPrint()
       last_post = now
     }
   }
 }
 
-function post() {
-  self.postMessage(chunks)
+function postPrint() {
+  post({ kind: 'print', data: chunks })
   chunks = []
+}
+
+function post(response: WorkerResponse) {
+  self.postMessage(response)
 }
