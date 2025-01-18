@@ -33,7 +33,7 @@ jobs:
       - uses: actions/setup-node@v4
 
       - run: npm install
-      - run: num run build
+      - run: npm run build
 
   check:
     if: always()
