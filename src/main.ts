@@ -12,6 +12,7 @@ function escapeHTML(html: string): string {
 }
 
 const statusEl = document.getElementById('status')!
+const installedEl = document.getElementById('installed')!
 const outputEl = document.getElementById('output')!
 const decoder = new TextDecoder()
 const ansi_converter = new Convert()
@@ -24,12 +25,16 @@ worker.onmessage = ({ data }: { data: WorkerResponse }) => {
       let arr = new Uint8Array(chunk)
       terminal_output += decoder.decode(arr)
     }
-    outputEl.innerHTML = ansi_converter.toHtml(escapeHTML(terminal_output))
-    // scrolls to the bottom of the div
-    outputEl.scrollIntoView(false)
+  } else if (data.kind == 'error') {
+    terminal_output += data.message
+  } else if (data.kind == 'installed') {
+    installedEl.innerText = `Installed dependencies: ${data.installed.join(', ')}`
   } else {
     statusEl.innerText = data.message
   }
+  outputEl.innerHTML = ansi_converter.toHtml(escapeHTML(terminal_output))
+  // scrolls to the bottom of the div
+  outputEl.scrollIntoView(false)
 }
 
 function workerMessage(data: RunCode) {
@@ -37,7 +42,7 @@ function workerMessage(data: RunCode) {
 }
 
 statusEl.innerText = 'Starting Python…'
-workerMessage({ user_code: null })
+workerMessage({ user_code: defaultPythonCode, warmup: true })
 
 async function loadEditor() {
   // const monaco = await import('monaco-editor')
@@ -70,7 +75,8 @@ async function loadEditor() {
 
   function run() {
     terminal_output = ''
-    statusEl.innerText = 'Running Python…'
+    statusEl.innerText = 'Launching Python…'
+    installedEl.innerText = ''
     worker.postMessage({ user_code: editor.getValue() })
   }
 

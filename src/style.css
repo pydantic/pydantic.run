@@ -35,6 +35,8 @@ div.col {
   border: 1px solid #aaa;
   margin: 0 5px;
   border-radius: 5px;
+  display: flex;
+  flex-direction: column;
 }
 pre {
   margin: 0;
@@ -45,15 +47,11 @@ a {
   color: #58a6ff;
   text-decoration: none;
 }
-.code-area {
-  display: flex;
-  flex-direction: column;
-}
 
 #editor {
   width: 100%;
   flex: 1;
-  border-bottom: 1px solid #666;
+  border-bottom: 1px solid #34364f;
   overflow: hidden;
 }
 .right {
@@ -76,6 +74,15 @@ button:hover {
   margin: 5px 20px 10px;
 }
 #status {
-  padding-bottom: 20px;
-  color: cadetblue;
+  color: #2490b5;
+  margin-bottom: 5px;
+}
+#installed {
+  color: #777;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #34364f;
+  margin-bottom: 8px;
+}
+#output {
+  overflow: auto;
 }

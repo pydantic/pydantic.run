@@ -1,23 +1,43 @@
 import { loadPyodide, PyodideInterface, version as pyodideVersion } from 'pyodide'
-import runPyCode from './run.py?raw'
+import pythonCode from './main.py?raw'
 import type { RunCode, WorkerResponse } from './messageTypes'
 
 self.onmessage = async ({ data }: { data: RunCode }) => {
-  const { user_code } = data
+  const { user_code, warmup } = data
+  let msg = ''
   try {
-    const startTime = performance.now()
+    const startSetupTime = performance.now()
     const pyodide = await getPyodide()
-    await pyodide.runPythonAsync(runPyCode, { globals: pyodide.toPy({ user_code }) })
-    postPrint()
-    if (user_code === null) {
-      post({ kind: 'status', message: 'Ready' })
-    } else {
-      const endTime = performance.now()
-      post({ kind: 'status', message: `Finished, execution time: ${(endTime - startTime).toFixed(2)}ms` })
+    const setupTime = performance.now() - startSetupTime
+    if (setupTime > 50) {
+      msg += `Started Python in ${setupTime.toFixed(0)}ms, `
     }
+    post({ kind: 'status', message: `${msg}Installing dependencies…` })
+    const startInstallTime = performance.now()
+    const options = { globals: pyodide.toPy({ user_code }) }
+    const installedJson: string = await pyodide.runPythonAsync('import main; main.install_deps(user_code)', options)
+    const installed = JSON.parse(installedJson)
+    if (installed) {
+      post({ kind: 'installed', installed })
+    }
+    const installTime = performance.now() - startInstallTime
+    if (installTime > 50) {
+      msg += `Installed dependencies in ${installTime.toFixed(0)}ms, `
+    }
+    if (warmup) {
+      post({ kind: 'status', message: `${msg}Ready` })
+      return
+    }
+    post({ kind: 'status', message: `${msg}running code…` })
+    const startExecTime = performance.now()
+    await pyodide.runPythonAsync('import main; main.run_code(user_code)', options)
+    const execTime = performance.now() - startExecTime
+    postPrint()
+    post({ kind: 'status', message: `${msg}ran code in ${execTime.toFixed(0)}ms` })
   } catch (err) {
-    console.error(err)
-    post({ kind: 'status', message: `Error: ${err}` })
+    console.error(typeof err)
+    post({ kind: 'status', message: `${msg}Error occurred` })
+    post({ kind: 'error', message: (err as any).toString() })
   }
 }
 
@@ -31,6 +51,11 @@ async function getPyodide(): Promise<PyodideInterface> {
     console.log('Pyodide version', pyodide.version)
     setupStreams(pyodide)
     await pyodide.loadPackage(['micropip', 'pygments'])
+
+    const pathlib = pyodide.pyimport('pathlib')
+    pathlib.Path('main.py').write_text(pythonCode)
+    pyodide.pyimport('main')
+
     loadedPyodide = pyodide
   }
   return loadedPyodide
