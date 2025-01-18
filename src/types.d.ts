@@ -1,3 +1,8 @@
+export interface Worker {
+  postMessage(data: RunCode): void
+  onmessage: (event: { data: WorkerResponse }) => void
+}
+
 export interface RunCode {
   user_code: string
   warmup?: boolean

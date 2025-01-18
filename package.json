@@ -28,9 +28,11 @@
     "prettier": "^3.4.2",
     "prettier-plugin-toml": "^2.0.1",
     "pyodide": "^0.27.1",
+    "solid-js": "^1.9.4",
     "typescript": "~5.6.2",
     "vite": "^6.0.5",
     "vite-plugin-monaco-editor-esm": "^2.0.1",
+    "vite-plugin-solid": "^2.11.0",
     "vite-plugin-static-copy": "^2.2.0"
   }
 }

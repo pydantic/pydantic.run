@@ -48,7 +48,7 @@ a {
   text-decoration: none;
 }
 
-#editor {
+.editor {
   width: 100%;
   flex: 1;
   border-bottom: 1px solid #34364f;
@@ -73,16 +73,16 @@ button:hover {
   opacity: 0.5;
   margin: 5px 20px 10px;
 }
-#status {
+.status {
   color: #2490b5;
   margin-bottom: 5px;
 }
-#installed {
+.installed {
   color: #777;
   padding-bottom: 8px;
   border-bottom: 1px solid #34364f;
   margin-bottom: 8px;
 }
-#output {
+.output {
   overflow: auto;
 }
