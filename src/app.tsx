@@ -72,8 +72,8 @@ export default function () {
     worker = new Worker()
     worker.onmessage = ({ data }: { data: WorkerResponse }) => {
       if (data.kind == 'print') {
-        for (let chunk of data.data) {
-          let arr = new Uint8Array(chunk)
+        for (const chunk of data.data) {
+          const arr = new Uint8Array(chunk)
           terminalOutput += decoder.decode(arr)
         }
       } else if (data.kind == 'error') {

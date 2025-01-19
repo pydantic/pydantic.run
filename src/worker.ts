@@ -74,8 +74,8 @@ async function getPyodide(): Promise<PyodideInterface> {
 function setupStreams(pyodide: PyodideInterface) {
   const { FS } = pyodide
   const { TTY } = (pyodide as any)._module
-  let mytty = FS.makedev(FS.createDevice.major++, 0)
-  let myttyerr = FS.makedev(FS.createDevice.major++, 0)
+  const mytty = FS.makedev(FS.createDevice.major++, 0)
+  const myttyerr = FS.makedev(FS.createDevice.major++, 0)
   TTY.register(mytty, makeTtyOps())
   TTY.register(myttyerr, makeTtyOps())
   FS.mkdev('/dev/mytty', mytty)

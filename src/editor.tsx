@@ -11,7 +11,7 @@ interface EditorProps {
 
 export default function (props: EditorProps) {
   const { runCode, files } = props
-  let [loading, setLoading] = createSignal(true)
+  const [loading, setLoading] = createSignal(true)
   let editor: monaco.editor.IStandaloneCodeEditor | null = null
   let editorRef!: HTMLDivElement
 
