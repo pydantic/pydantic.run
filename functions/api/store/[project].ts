@@ -6,15 +6,14 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   const { url, method } = request
   const { pathname, searchParams } = new URL(url)
   const readKey = pathname.split('/')[3]
-  const isNew = readKey === 'new'
-  console.log({ pathname, readKey, isNew })
-  if (!isNew && method === 'GET') {
+  if (method === 'GET') {
     return await get(readKey, env)
   }
 
   if (method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
   }
+
   const contentType = request.headers.get('content-type')
   if (!contentType || !contentType.includes('application/json')) {
     return new Response('Invalid content type', { status: 400 })
@@ -25,7 +24,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     return new Response('File too large', { status: 413 })
   }
 
-  if (isNew) {
+  if (readKey === 'new') {
     return await storeNew(body, env)
   } else {
     return await storeExisting(body, readKey, searchParams, env)
@@ -33,15 +32,14 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
 }
 
 async function get(readKey: string, env: Env): Promise<Response> {
-  let object = await env.BUCKET.get(`${readKey}/files`)
+  const object = await env.BUCKET.get(filesPath(readKey))
   return new Response(object.body, { headers: { 'content-type': 'application/json' } })
 }
 
 async function storeNew(body: Blob, env: Env): Promise<Response> {
   const readKey = generateHex(16)
   const writeKey = generateHex(32)
-  await env.BUCKET.put(`${readKey}/files`, body)
-  await env.BUCKET.put(`${readKey}/writeKey`, writeKey)
+  await Promise.all([env.BUCKET.put(filesPath(readKey), body), env.BUCKET.put(writeKeyPath(readKey), writeKey)])
   const response = {
     readKey,
     writeKey,
@@ -59,15 +57,18 @@ async function storeExisting(body: Blob, readKey: string, search: URLSearchParam
   if (!writeKey) {
     return new Response('Unauthorized - no writeKey', { status: 401 })
   }
-  const object = await env.BUCKET.get(`${readKey}/writeKey`)
+  const object = await env.BUCKET.get(writeKeyPath(readKey))
   const realWriteKey = await object.text()
   if (realWriteKey !== writeKey) {
     return new Response('Unauthorized - wrong writeKey', { status: 401 })
   }
 
-  await env.BUCKET.put(`${readKey}/files`, body)
+  await env.BUCKET.put(filesPath(readKey), body)
   return new Response('ok')
 }
+
+const filesPath = (readKey: string) => `${readKey}/files`
+const writeKeyPath = (readKey: string) => `${readKey}/writeKey`
 
 export function generateHex(length: number): string {
   const size = Math.ceil(length / 2)

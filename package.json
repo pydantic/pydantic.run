@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "format": "prettier --write -- .",
-    "lint": "eslint --max-warnings=0 src && prettier --check -- .",
+    "lint": "eslint --max-warnings=0 src functions && prettier --check -- .",
     "typecheck": "tsc --noEmit",
     "dev": "vite",
     "cfdev": "npm run build && wrangler pages dev",
