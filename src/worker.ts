@@ -1,6 +1,7 @@
 import { loadPyodide, PyodideInterface, version as pyodideVersion } from 'pyodide'
 import pythonCode from './run.py?raw'
 import type { RunCode, WorkerResponse } from './types'
+/* eslint @typescript-eslint/no-explicit-any: off */
 
 self.onmessage = async ({ data }: { data: RunCode }) => {
   const { files, warmup } = data
