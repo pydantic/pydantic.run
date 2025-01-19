@@ -25,17 +25,8 @@ export default function () {
     worker!.postMessage(data)
   }
 
-  async function checkSave(save: boolean) {
-    if (save) {
-      try {
-        await store(files())
-      } catch (err) {
-        setStatus(`Failed to save: ${err}`)
-      }
-    }
-  }
-
   async function runCode(newContent: string) {
+    console.log('runCode')
     setFiles((prev) =>
       (prev || []).map(({ name, content, active }) => {
         if (active) {
@@ -45,19 +36,26 @@ export default function () {
         }
       }),
     )
-    await checkSave(save())
     setStatus('Launching Python...')
     setInstalled('')
     setOutputHtml('')
     terminalOutput = ''
-    const _files = files()
-    if (_files) {
-      workerMessage(_files)
+    const files_ = files()
+    if (files_) {
+      workerMessage(files_)
     }
   }
 
   createEffect(async () => {
-    await checkSave(save())
+    const save_ = save()
+    const files_ = files()
+    if (save_) {
+      try {
+        await store(files_)
+      } catch (err) {
+        setStatus(`Failed to save: ${err}`)
+      }
+    }
   })
 
   onMount(async () => {

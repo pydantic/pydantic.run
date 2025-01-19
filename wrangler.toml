@@ -3,8 +3,8 @@ name = "logfire-run"
 compatibility_date = "2024-12-24"
 pages_build_output_dir = "./dist"
 
-[build]
-command = "npm run build"
+#[build]
+#command = "npm run build"
 
 [[r2_buckets]]
 bucket_name = "logfire-run"

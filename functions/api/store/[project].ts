@@ -33,7 +33,11 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
 
 async function get(readKey: string, env: Env): Promise<Response> {
   const object = await env.BUCKET.get(filesPath(readKey))
-  return new Response(object.body, { headers: { 'content-type': 'application/json' } })
+  if (object === null) {
+    return new Response('Project not found', { status: 404 })
+  } else {
+    return new Response(object.body, { headers: { 'content-type': 'application/json' } })
+  }
 }
 
 async function storeNew(body: Blob, env: Env): Promise<Response> {
@@ -58,9 +62,12 @@ async function storeExisting(body: Blob, readKey: string, search: URLSearchParam
     return new Response('Unauthorized - no writeKey', { status: 401 })
   }
   const object = await env.BUCKET.get(writeKeyPath(readKey))
+  if (!object) {
+    return new Response('Project not found', { status: 404 })
+  }
   const realWriteKey = await object.text()
   if (realWriteKey !== writeKey) {
-    return new Response('Unauthorized - wrong writeKey', { status: 401 })
+    return new Response('Unauthorized - wrong writeKey', { status: 403 })
   }
 
   await env.BUCKET.put(filesPath(readKey), body)

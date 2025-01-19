@@ -10,22 +10,40 @@ interface StoreResponse {
 export async function store(files: File[] | null) {
   const { pathname } = location
   const readKey = getReadKey(pathname)
-  const writeKey = localStorage.getItem(getWriteKey(readKey))
-  const url = writeKey ? `/api/store/${readKey}?writeKey=${writeKey}` : '/api/store/new'
+  const body = JSON.stringify({ files })
+  let url = '/api/store/new'
+  let writeKey: string | null = null
+  if (readKey) {
+    writeKey = localStorage.getItem(getWriteKey(readKey))
+    if (writeKey) {
+      url = `/api/store/${readKey}?writeKey=${writeKey}`
+      const lastSave = localStorage.getItem(getContentKey(readKey))
+      console.log({ lastSave, body })
+      if (lastSave && lastSave == body) {
+        console.debug('skipping save, no changes')
+        return
+      }
+    }
+  }
+  console.debug(writeKey ? 'saving changes' : 'creating new project')
+
   const r = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ files }),
+    body,
   })
   if (!r.ok) {
     const response_text = await r.text()
     console.warn({ status: r.status, response_text })
     throw new Error(`${r.status}: Failed to store files.`)
   }
-  if (!writeKey) {
+  if (readKey && writeKey) {
+    localStorage.setItem(getContentKey(readKey), body)
+  } else {
     const data: StoreResponse = await r.json()
+    localStorage.setItem(getContentKey(data.readKey), body)
     const path = `/store/${data.readKey}`
     localStorage.setItem(getWriteKey(data.readKey), data.writeKey)
     history.pushState({}, '', path)
@@ -62,4 +80,5 @@ async function retrieveStored(path: string): Promise<File[] | null> {
   return files as File[]
 }
 
-const getReadKey = (path: string) => path.split('/')[2]
+const getReadKey = (path: string): string | null => path.split('/')[2] || null
+const getContentKey = (readKey: string) => `content:${readKey}`

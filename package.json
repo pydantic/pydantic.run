@@ -6,9 +6,9 @@
   "scripts": {
     "format": "prettier --write -- .",
     "lint": "eslint --max-warnings=0 src functions && prettier --check -- .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && cd functions && tsc --noEmit",
     "dev": "vite",
-    "cfdev": "npm run build && wrangler pages dev",
+    "cfdev": "wrangler pages dev",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
