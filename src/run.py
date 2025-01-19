@@ -28,7 +28,7 @@ _logfire_configured = False
 class File(TypedDict):
     name: str
     content: str
-    active: bool
+    activeIndex: int
 
 
 async def install_deps(files: list[File]) -> str | None:
@@ -40,7 +40,14 @@ async def install_deps(files: list[File]) -> str | None:
         (cwd / file['name']).write_text(file['content'])
 
     dependencies: set[str] = set()
-    active = next((file for file in files if file['active']), None)
+    active: File | None = None
+    highest = -1
+    for file in files:
+        active_index = file['activeIndex']
+        if active_index > highest:
+            active = file
+            highest = active_index
+
     if active:
         dependencies = _find_pep723_dependencies(active['content'])
     if dependencies is None:

@@ -3,7 +3,7 @@ import { onMount, createSignal, Show } from 'solid-js'
 import type * as monaco from 'monaco-editor'
 import type { File } from './types'
 import { retrieve, store } from './store.ts'
-import Tabs from './tabs'
+import { Tabs, findActive } from './tabs'
 
 interface EditorProps {
   runCode: (files: File[], warmup?: boolean) => void
@@ -80,9 +80,16 @@ export default function ({ runCode }: EditorProps) {
   }
 
   function updateFiles(activeContent: string): File[] {
-    return setFiles((prev) =>
-      (prev || []).map(({ name, content, active }) => ({ name, content: active ? activeContent : content, active })),
-    )
+    return setFiles((prev) => {
+      if (prev) {
+        const active = findActive(prev)
+        return prev.map(({ name, content, activeIndex }) => {
+          return { name, content: activeIndex == active ? activeContent : content, activeIndex }
+        })
+      } else {
+        return []
+      }
+    })
   }
 
   async function run() {
@@ -145,6 +152,10 @@ export default function ({ runCode }: EditorProps) {
 }
 
 function getContent(files: File[] | null): string | null {
-  const file = files ? files.find((f) => f.active) : undefined
+  if (!files) {
+    return null
+  }
+  const active = findActive(files)
+  const file = files.find((f) => f.activeIndex === active)
   return file ? file.content : null
 }

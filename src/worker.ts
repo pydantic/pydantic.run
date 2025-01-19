@@ -1,7 +1,7 @@
+/* eslint @typescript-eslint/no-explicit-any: off */
 import { loadPyodide, PyodideInterface, version as pyodideVersion } from 'pyodide'
 import pythonCode from './run.py?raw'
-import type { RunCode, WorkerResponse } from './types'
-/* eslint @typescript-eslint/no-explicit-any: off */
+import type { File, RunCode, WorkerResponse } from './types'
 
 self.onmessage = async ({ data }: { data: RunCode }) => {
   const { files, warmup } = data
@@ -9,7 +9,7 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
   try {
     const [setupTime, pyodide] = await time(getPyodide())
     if (setupTime > 50) {
-      msg += `Started Python in ${setupTime.toFixed(0)}ms, `
+      msg += `Started Python in ${asMs(setupTime)}, `
     }
     post({ kind: 'status', message: `${msg}Installing dependencies…` })
 
@@ -23,7 +23,7 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
       post({ kind: 'installed', installed })
     }
     if (installTime > 50) {
-      msg += `Installed dependencies in ${installTime.toFixed(0)}ms, `
+      msg += `Installed dependencies in ${asMs(installTime)}, `
     }
     if (warmup) {
       post({ kind: 'status', message: `${msg}Ready` })
@@ -31,18 +31,27 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
     }
     post({ kind: 'status', message: `${msg}running code…` })
 
-    const activeFile = files.find((f) => f.active)!.name
+    const active = findActive(files)
+    const activeFile = files.find((f) => f.activeIndex === active)!.name
     const [execTime] = await time(
       pyodide.runPythonAsync('import run; run.run_code(file)', {
         globals: pyodide.toPy({ file: activeFile }),
       }),
     )
     postPrint()
-    post({ kind: 'status', message: `${msg}ran code in ${execTime.toFixed(0)}ms` })
+    post({ kind: 'status', message: `${msg}ran code in ${asMs(execTime)}` })
   } catch (err) {
     console.error(err)
     post({ kind: 'status', message: `${msg}Error occurred` })
     post({ kind: 'error', message: (err as any).toString() })
+  }
+}
+
+function asMs(time: number) {
+  if (time < 100) {
+    return `${time.toFixed(2)}ms`
+  } else {
+    return `${time.toFixed(0)}ms`
   }
 }
 
@@ -134,3 +143,6 @@ function postPrint() {
 function post(response: WorkerResponse) {
   self.postMessage(response)
 }
+
+export const findActive = (files: File[]): number =>
+  files.reduce((acc, { activeIndex }) => Math.max(acc, activeIndex), 0)

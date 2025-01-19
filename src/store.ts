@@ -63,7 +63,7 @@ export async function retrieve(): Promise<File[]> {
   }
   const base64Code = searchParams.get('code')
   const content = base64Code ? atob(base64Code) : defaultPythonCode
-  return [{ name: 'main.py', content, active: true }]
+  return [{ name: 'main.py', content, activeIndex: 0 }]
 }
 
 async function retrieveStored(path: string): Promise<File[] | null> {

@@ -1,7 +1,8 @@
 export interface File {
   name: string
   content: string
-  active: boolean
+  // highest activeIndex value is the active tab
+  activeIndex: number
 }
 
 export interface RunCode {
