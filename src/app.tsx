@@ -1,10 +1,10 @@
-import { createSignal, onMount } from 'solid-js'
+import { createEffect, createSignal, onMount } from 'solid-js'
 
 import Convert from 'ansi-to-html'
 import Editor from './editor'
 import Worker from './worker?worker'
-import defaultPythonCode from './default_code.py?raw'
 import type { WorkerResponse, RunCode, File } from './types'
+import { store, retrieve } from './store'
 
 const decoder = new TextDecoder()
 const ansiConverter = new Convert()
@@ -12,22 +12,32 @@ const ansiConverter = new Convert()
 export default function () {
   const [status, setStatus] = createSignal('Launching Python...')
   const [installed, setInstalled] = createSignal('')
-  // const [output, setOutput] = createSignal('')
   const [outputHtml, setOutputHtml] = createSignal('')
   let terminalOutput = ''
   let worker: Worker
   let outputRef!: HTMLPreElement
 
-  const [files, setFiles] = createSignal<File[]>(getFiles())
+  const [files, setFiles] = createSignal<File[] | null>(null)
+  const [save, setSave] = createSignal(false)
 
-  function workerMessage(warmup: boolean = false) {
-    const data: RunCode = { files: files(), warmup }
+  function workerMessage(files: File[], warmup: boolean = false) {
+    const data: RunCode = { files, warmup }
     worker!.postMessage(data)
   }
 
-  function runCode(newContent: string) {
+  async function checkSave(save: boolean) {
+    if (save) {
+      try {
+        await store(files())
+      } catch (err) {
+        setStatus(`Failed to save: ${err}`)
+      }
+    }
+  }
+
+  async function runCode(newContent: string) {
     setFiles((prev) =>
-      prev.map(({ name, content, active }) => {
+      (prev || []).map(({ name, content, active }) => {
         if (active) {
           return { name, content: newContent, active }
         } else {
@@ -35,40 +45,22 @@ export default function () {
         }
       }),
     )
+    await checkSave(save())
     setStatus('Launching Python...')
     setInstalled('')
     setOutputHtml('')
     terminalOutput = ''
-    workerMessage()
+    const _files = files()
+    if (_files) {
+      workerMessage(_files)
+    }
   }
 
-  // function changeTab(updateContent: string, newName: string) {
-  //   setFiles((prev) =>
-  //     prev.map(({ name, content, active }) => {
-  //       if (name == newName) {
-  //         return { name, content, active: true }
-  //       } else if (active) {
-  //         return { name, content: updateContent, active: false }
-  //       } else {
-  //         return { name, content, active }
-  //       }
-  //     }),
-  //   )
-  // }
-  //
-  // function newTab() {
-  //   const newFileName = getNewName(files())
-  //   if (newFileName) {
-  //     const file: File = { name: newFileName, content: '', active: true }
-  //     setFiles((prev) => [...prev.map(({ name, content }) => ({ name, content, active: false })), file])
-  //   }
-  // }
-  //
-  // function closeTab(name: string) {
-  //
-  // }
+  createEffect(async () => {
+    await checkSave(save())
+  })
 
-  onMount(() => {
+  onMount(async () => {
     worker = new Worker()
     worker.onmessage = ({ data }: { data: WorkerResponse }) => {
       if (data.kind == 'print') {
@@ -87,7 +79,9 @@ export default function () {
       // scrolls to the bottom of the div
       outputRef.scrollTop = outputRef.scrollHeight
     }
-    workerMessage(true)
+    const files = await retrieve()
+    setFiles(files)
+    workerMessage(files, true)
   })
 
   return (
@@ -100,7 +94,7 @@ export default function () {
         <div id="counter"></div>
       </header>
       <section>
-        <Editor runCode={runCode} files={files} setFiles={setFiles} />
+        <Editor runCode={runCode} files={files} save={save} setSave={setSave} setFiles={setFiles} />
         <div class="col">
           <div class="status">{status()}</div>
           <div class="installed">{installed()}</div>
@@ -115,11 +109,4 @@ const escapeEl = document.createElement('textarea')
 function escapeHTML(html: string): string {
   escapeEl.textContent = html
   return escapeEl.innerHTML
-}
-
-function getFiles(): File[] {
-  const url = new URL(window.location.href)
-  const base64Code = url.searchParams.get('code')
-  const content = base64Code ? atob(base64Code) : defaultPythonCode
-  return [{ name: 'main.py', content, active: true }]
 }

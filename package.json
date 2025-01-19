@@ -8,6 +8,7 @@
     "lint": "eslint --max-warnings=0 src && prettier --check -- .",
     "typecheck": "tsc --noEmit",
     "dev": "vite",
+    "cfdev": "npm run build && wrangler pages dev",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
@@ -24,6 +25,7 @@
   },
   "dependencies": {
     "@eslint/js": "^9.18.0",
+    "@cloudflare/workers-types": "^4.20250109.0",
     "ansi-to-html": "^0.7.2",
     "monaco-editor": "^0.52.2",
     "prettier": "^3.4.2",
@@ -35,6 +37,7 @@
     "vite": "^6.0.5",
     "vite-plugin-monaco-editor-esm": "^2.0.1",
     "vite-plugin-solid": "^2.11.0",
-    "vite-plugin-static-copy": "^2.2.0"
+    "vite-plugin-static-copy": "^2.2.0",
+    "wrangler": "^3.103.2"
   }
 }
