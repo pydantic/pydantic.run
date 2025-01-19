@@ -1,10 +1,9 @@
-import { createEffect, createSignal, onMount } from 'solid-js'
+import { createSignal, onMount } from 'solid-js'
 
 import Convert from 'ansi-to-html'
 import Editor from './editor'
 import Worker from './worker?worker'
 import type { WorkerResponse, RunCode, File } from './types'
-import { store, retrieve } from './store'
 
 const decoder = new TextDecoder()
 const ansiConverter = new Convert()
@@ -16,47 +15,6 @@ export default function () {
   let terminalOutput = ''
   let worker: Worker
   let outputRef!: HTMLPreElement
-
-  const [files, setFiles] = createSignal<File[] | null>(null)
-  const [save, setSave] = createSignal(false)
-
-  function workerMessage(files: File[], warmup: boolean = false) {
-    const data: RunCode = { files, warmup }
-    worker!.postMessage(data)
-  }
-
-  async function runCode(newContent: string) {
-    console.log('runCode')
-    setFiles((prev) =>
-      (prev || []).map(({ name, content, active }) => {
-        if (active) {
-          return { name, content: newContent, active }
-        } else {
-          return { name, content, active }
-        }
-      }),
-    )
-    setStatus('Launching Python...')
-    setInstalled('')
-    setOutputHtml('')
-    terminalOutput = ''
-    const files_ = files()
-    if (files_) {
-      workerMessage(files_)
-    }
-  }
-
-  createEffect(async () => {
-    const save_ = save()
-    const files_ = files()
-    if (save_) {
-      try {
-        await store(files_)
-      } catch (err) {
-        setStatus(`Failed to save: ${err}`)
-      }
-    }
-  })
 
   onMount(async () => {
     worker = new Worker()
@@ -77,11 +35,18 @@ export default function () {
       // scrolls to the bottom of the div
       outputRef.scrollTop = outputRef.scrollHeight
     }
-    const files = await retrieve()
-    setFiles(files)
-    workerMessage(files, true)
   })
 
+  async function runCode(files: File[], warmup: boolean = false) {
+    setStatus('Launching Python...')
+    setInstalled('')
+    setOutputHtml('')
+    terminalOutput = ''
+    const data: RunCode = { files, warmup }
+    worker!.postMessage(data)
+  }
+
+  // noinspection JSUnusedAssignment
   return (
     <main>
       <header>
@@ -92,9 +57,9 @@ export default function () {
         <div id="counter"></div>
       </header>
       <section>
-        <Editor runCode={runCode} files={files} save={save} setSave={setSave} setFiles={setFiles} />
+        <Editor runCode={runCode} />
         <div class="col">
-          <div class="status">{status()}</div>
+          <div class="status my-5">{status()}</div>
           <div class="installed">{installed()}</div>
           <pre class="output" innerHTML={outputHtml()} ref={outputRef}></pre>
         </div>

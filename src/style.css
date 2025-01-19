@@ -56,9 +56,26 @@ a {
 }
 footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   padding: 8px 0 0;
 }
+.flex {
+  display: flex;
+}
+.middle {
+  vertical-align: middle;
+  display: inline-block;
+  margin: 10px 5px 0;
+}
+
+.fade {
+  opacity: 1;
+  transition: opacity 300ms ease-out;
+}
+.fadeout {
+  opacity: 0;
+}
+
 button {
   color: white;
   border: none;
@@ -86,9 +103,12 @@ button:hover {
   opacity: 0.5;
   margin: 5px 20px 10px;
 }
+.my-5 {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
 .status {
   color: #2490b5;
-  margin: 5px 0;
 }
 .installed {
   color: #777;
@@ -139,11 +159,6 @@ button:hover {
 }
 
 /*toggle switch*/
-.toggle .name {
-  vertical-align: middle;
-  display: inline-block;
-  margin: 10px 5px 0;
-}
 .toggle .switch {
   position: relative;
   display: inline-block;

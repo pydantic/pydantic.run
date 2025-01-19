@@ -7,7 +7,7 @@ interface StoreResponse {
   writeKey: string
 }
 
-export async function store(files: File[] | null) {
+export async function store(files: File[] | null): Promise<string | null> {
   const { pathname } = location
   const readKey = getReadKey(pathname)
   const body = JSON.stringify({ files })
@@ -18,14 +18,12 @@ export async function store(files: File[] | null) {
     if (writeKey) {
       url = `/api/store/${readKey}?writeKey=${writeKey}`
       const lastSave = localStorage.getItem(getContentKey(readKey))
-      console.log({ lastSave, body })
       if (lastSave && lastSave == body) {
         console.debug('skipping save, no changes')
-        return
+        return null
       }
     }
   }
-  console.debug(writeKey ? 'saving changes' : 'creating new project')
 
   const r = await fetch(url, {
     method: 'POST',
@@ -41,12 +39,14 @@ export async function store(files: File[] | null) {
   }
   if (readKey && writeKey) {
     localStorage.setItem(getContentKey(readKey), body)
+    return 'Changes saved'
   } else {
     const data: StoreResponse = await r.json()
     localStorage.setItem(getContentKey(data.readKey), body)
     const path = `/store/${data.readKey}`
     localStorage.setItem(getWriteKey(data.readKey), data.writeKey)
     history.pushState({}, '', path)
+    return 'New project created'
   }
 }
 
