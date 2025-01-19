@@ -81,7 +81,7 @@ function getNewName(files: File[]): string | null {
   let defaultName: string = 'new.py'
   let num = 1
   while (files.find((f) => f.name === defaultName)) {
-    defaultName = `new-${num}.py`
+    defaultName = `new_${num}.py`
     num++
   }
 
