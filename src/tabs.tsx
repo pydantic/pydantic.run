@@ -4,11 +4,12 @@ import type { File } from './types'
 interface TabProps {
   getActiveContent: () => string
   setActiveContent: (content: string) => void
-  files: Accessor<File[] | null>
-  setFiles: Setter<File[] | null>
+  files: Accessor<File[]>
+  setFiles: Setter<File[]>
+  save: (files: File[], verbose?: boolean) => void
 }
 
-export default function ({ files, setFiles, getActiveContent, setActiveContent }: TabProps) {
+export default function ({ getActiveContent, setActiveContent, files, setFiles, save }: TabProps) {
   function newTab() {
     const activeContent = getActiveContent()
     const newFileName = getNewName(files())
@@ -20,8 +21,8 @@ export default function ({ files, setFiles, getActiveContent, setActiveContent }
   }
 
   function changeTab(activeContent: string, newName: string) {
-    setFiles((prev) =>
-      (prev || []).map(({ name, content, active }) => {
+    const files = setFiles((prev) =>
+      prev.map(({ name, content, active }) => {
         if (name == newName) {
           setActiveContent(content)
           return { name, content, active: true }
@@ -32,11 +33,13 @@ export default function ({ files, setFiles, getActiveContent, setActiveContent }
         }
       }),
     )
+    save(files)
   }
 
-  function closeTab(name: string) {
-    setFiles((prev) => {
-      if (prev === null || prev.length === 1) {
+  function closeTab(event: MouseEvent, name: string) {
+    event.stopPropagation()
+    const files = setFiles((prev) => {
+      if (prev.length === 1) {
         return prev
       }
       const files = prev.filter((f) => f.name !== name)
@@ -46,14 +49,15 @@ export default function ({ files, setFiles, getActiveContent, setActiveContent }
       }
       return files
     })
+    save(files)
   }
 
   return (
     <div class="tabs">
-      {(files() || []).map(({ name, active }) => (
+      {files().map(({ name, active }) => (
         <div class={active ? 'tab active' : 'tab'} onClick={() => changeTab(getActiveContent(), name)}>
           {name}
-          <span class="close" onClick={() => closeTab(name)}>
+          <span class="close" onClick={(e) => closeTab(e, name)}>
             ✕
           </span>
         </div>
@@ -65,16 +69,16 @@ export default function ({ files, setFiles, getActiveContent, setActiveContent }
   )
 }
 
-function getNewName(files: File[] | null): string | null {
+function getNewName(files: File[]): string | null {
   let defaultName: string = 'new.py'
   let num = 1
-  while (files && files.find((f) => f.name === defaultName)) {
+  while (files.find((f) => f.name === defaultName)) {
     defaultName = `new-${num}.py`
     num++
   }
 
   let name = prompt('File name?', defaultName)
-  while (name !== null && files && files.find((f) => f.name === name)) {
+  while (name !== null && files.find((f) => f.name === name)) {
     name = prompt(`File name ${name} already exists. Try another name?`, defaultName)
   }
   return name

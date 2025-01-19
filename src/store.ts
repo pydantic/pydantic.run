@@ -24,6 +24,7 @@ export async function store(files: File[] | null): Promise<string | null> {
       }
     }
   }
+  console.debug(writeKey ? 'saving changes' : 'creating new project')
 
   const r = await fetch(url, {
     method: 'POST',

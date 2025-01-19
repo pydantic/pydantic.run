@@ -12,7 +12,7 @@ interface EditorProps {
 export default function ({ runCode }: EditorProps) {
   const [saveActive, setSaveActive] = createSignal(false)
   const [saveStatus, setSaveStatus] = createSignal('Changes not saved')
-  const [files, setFiles] = createSignal<File[] | null>(null)
+  const [files, setFiles] = createSignal<File[]>([])
   const [fadeOut, setFadeOut] = createSignal(false)
   let editor: monaco.editor.IStandaloneCodeEditor | null = null
   const editorEl = (<div class="editor" />) as HTMLElement
@@ -44,9 +44,7 @@ export default function ({ runCode }: EditorProps) {
     runCode(initialFiles, true)
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, run)
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, async () => {
-      await save(updateFiles(getActiveContent()), true)
-    })
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => save(updateFiles(getActiveContent()), true))
 
     setInterval(() => {
       const newActiveContent = getActiveContent()
@@ -67,7 +65,7 @@ export default function ({ runCode }: EditorProps) {
     } catch (err) {
       setFadeOut(false)
       clearInterval(statusTimeout)
-      setSaveStatus(`Failed to save: ${err}`)
+      setSaveStatus(`Failed to save, ${err}`)
       return
     }
     if (verbose && msg === null) {
@@ -103,21 +101,23 @@ export default function ({ runCode }: EditorProps) {
     }
   }
 
-  async function toggleSave(enabled: boolean) {
+  function toggleSave(enabled: boolean) {
     setSaveActive(enabled)
     if (enabled) {
-      await save(updateFiles(getActiveContent()), true)
+      // noinspection JSIgnoredPromiseFromCall
+      save(updateFiles(getActiveContent()), true)
     }
   }
 
   return (
     <div class="col">
-      <Show when={files() !== null} fallback={<div class="loading">loading...</div>}>
+      <Show when={files().length} fallback={<div class="loading">loading...</div>}>
         <Tabs
           getActiveContent={getActiveContent}
           setActiveContent={setActiveContent}
           files={files}
           setFiles={setFiles}
+          save={save}
         />
         {editorEl}
         <footer>
