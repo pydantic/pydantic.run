@@ -15,7 +15,7 @@ export default function ({ runCode }: EditorProps) {
   const [files, setFiles] = createSignal<File[] | null>(null)
   const [fadeOut, setFadeOut] = createSignal(false)
   let editor: monaco.editor.IStandaloneCodeEditor | null = null
-  const editorEl = (<div class="editor"></div>) as HTMLElement
+  const editorEl = (<div class="editor" />) as HTMLElement
   let statusTimeout: number
 
   onMount(async () => {
