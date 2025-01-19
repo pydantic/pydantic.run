@@ -29,7 +29,9 @@ export default function ({ runCode }: EditorProps) {
       },
     })
 
-    let activeContent = getContent(initialFiles) || ''
+    const active = findActive(initialFiles)
+    const file = initialFiles.find((f) => f.activeIndex === active)
+    let activeContent = file ? file.content : ''
     editor = monaco.editor.create(editorEl, {
       value: activeContent,
       language: 'python',
@@ -81,14 +83,10 @@ export default function ({ runCode }: EditorProps) {
 
   function updateFiles(activeContent: string): File[] {
     return setFiles((prev) => {
-      if (prev) {
-        const active = findActive(prev)
-        return prev.map(({ name, content, activeIndex }) => {
-          return { name, content: activeIndex == active ? activeContent : content, activeIndex }
-        })
-      } else {
-        return []
-      }
+      const active = findActive(prev)
+      return prev.map(({ name, content, activeIndex }) => {
+        return { name, content: activeIndex == active ? activeContent : content, activeIndex }
+      })
     })
   }
 
@@ -149,13 +147,4 @@ export default function ({ runCode }: EditorProps) {
       </Show>
     </div>
   )
-}
-
-function getContent(files: File[] | null): string | null {
-  if (!files) {
-    return null
-  }
-  const active = findActive(files)
-  const file = files.find((f) => f.activeIndex === active)
-  return file ? file.content : null
 }
