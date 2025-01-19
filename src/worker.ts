@@ -1,6 +1,7 @@
 import { loadPyodide, PyodideInterface, version as pyodideVersion } from 'pyodide'
 import pythonCode from './run.py?raw'
 import type { RunCode, WorkerResponse } from './types'
+/* eslint @typescript-eslint/no-explicit-any: off */
 
 self.onmessage = async ({ data }: { data: RunCode }) => {
   const { files, warmup } = data
@@ -74,8 +75,8 @@ async function getPyodide(): Promise<PyodideInterface> {
 function setupStreams(pyodide: PyodideInterface) {
   const { FS } = pyodide
   const { TTY } = (pyodide as any)._module
-  let mytty = FS.makedev(FS.createDevice.major++, 0)
-  let myttyerr = FS.makedev(FS.createDevice.major++, 0)
+  const mytty = FS.makedev(FS.createDevice.major++, 0)
+  const myttyerr = FS.makedev(FS.createDevice.major++, 0)
   TTY.register(mytty, makeTtyOps())
   TTY.register(myttyerr, makeTtyOps())
   FS.mkdev('/dev/mytty', mytty)
