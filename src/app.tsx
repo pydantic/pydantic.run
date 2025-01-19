@@ -3,7 +3,6 @@ import { createSignal, onMount } from 'solid-js'
 import Convert from 'ansi-to-html'
 import Editor from './editor'
 import Worker from './worker?worker'
-import defaultPythonCode from './default_code.py?raw'
 import type { WorkerResponse, RunCode, File } from './types'
 
 const decoder = new TextDecoder()
@@ -12,63 +11,12 @@ const ansiConverter = new Convert()
 export default function () {
   const [status, setStatus] = createSignal('Launching Python...')
   const [installed, setInstalled] = createSignal('')
-  // const [output, setOutput] = createSignal('')
   const [outputHtml, setOutputHtml] = createSignal('')
   let terminalOutput = ''
   let worker: Worker
   let outputRef!: HTMLPreElement
 
-  const [files, setFiles] = createSignal<File[]>(getFiles())
-
-  function workerMessage(warmup: boolean = false) {
-    const data: RunCode = { files: files(), warmup }
-    worker!.postMessage(data)
-  }
-
-  function runCode(newContent: string) {
-    setFiles((prev) =>
-      prev.map(({ name, content, active }) => {
-        if (active) {
-          return { name, content: newContent, active }
-        } else {
-          return { name, content, active }
-        }
-      }),
-    )
-    setStatus('Launching Python...')
-    setInstalled('')
-    setOutputHtml('')
-    terminalOutput = ''
-    workerMessage()
-  }
-
-  // function changeTab(updateContent: string, newName: string) {
-  //   setFiles((prev) =>
-  //     prev.map(({ name, content, active }) => {
-  //       if (name == newName) {
-  //         return { name, content, active: true }
-  //       } else if (active) {
-  //         return { name, content: updateContent, active: false }
-  //       } else {
-  //         return { name, content, active }
-  //       }
-  //     }),
-  //   )
-  // }
-  //
-  // function newTab() {
-  //   const newFileName = getNewName(files())
-  //   if (newFileName) {
-  //     const file: File = { name: newFileName, content: '', active: true }
-  //     setFiles((prev) => [...prev.map(({ name, content }) => ({ name, content, active: false })), file])
-  //   }
-  // }
-  //
-  // function closeTab(name: string) {
-  //
-  // }
-
-  onMount(() => {
+  onMount(async () => {
     worker = new Worker()
     worker.onmessage = ({ data }: { data: WorkerResponse }) => {
       if (data.kind == 'print') {
@@ -87,9 +35,18 @@ export default function () {
       // scrolls to the bottom of the div
       outputRef.scrollTop = outputRef.scrollHeight
     }
-    workerMessage(true)
   })
 
+  async function runCode(files: File[], warmup: boolean = false) {
+    setStatus('Launching Python...')
+    setInstalled('')
+    setOutputHtml('')
+    terminalOutput = ''
+    const data: RunCode = { files, warmup }
+    worker!.postMessage(data)
+  }
+
+  // noinspection JSUnusedAssignment
   return (
     <main>
       <header>
@@ -100,9 +57,9 @@ export default function () {
         <div id="counter"></div>
       </header>
       <section>
-        <Editor runCode={runCode} files={files} setFiles={setFiles} />
+        <Editor runCode={runCode} />
         <div class="col">
-          <div class="status">{status()}</div>
+          <div class="status my-5">{status()}</div>
           <div class="installed">{installed()}</div>
           <pre class="output" innerHTML={outputHtml()} ref={outputRef}></pre>
         </div>
@@ -115,11 +72,4 @@ const escapeEl = document.createElement('textarea')
 function escapeHTML(html: string): string {
   escapeEl.textContent = html
   return escapeEl.innerHTML
-}
-
-function getFiles(): File[] {
-  const url = new URL(window.location.href)
-  const base64Code = url.searchParams.get('code')
-  const content = base64Code ? atob(base64Code) : defaultPythonCode
-  return [{ name: 'main.py', content, active: true }]
 }

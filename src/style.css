@@ -54,17 +54,47 @@ a {
   border-bottom: 1px solid #34364f;
   overflow: hidden;
 }
-.right {
-  text-align: right;
+footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0 0;
 }
+.flex {
+  display: flex;
+}
+.middle {
+  vertical-align: middle;
+  display: inline-block;
+  margin: 10px 5px 0;
+}
+
+.fade {
+  opacity: 1;
+  transition: opacity 300ms ease-out;
+}
+.fadeout {
+  opacity: 0;
+}
+
 button {
-  background: #28a745;
   color: white;
   border: none;
-  margin-top: 5px;
   padding: 10px 20px;
   border-radius: 5px;
   cursor: pointer;
+  margin-left: 10px;
+}
+button.run {
+  background: #28a745;
+}
+button.run:hover {
+  background: #218838;
+}
+button.save {
+  background: #007bff;
+}
+button.save:hover {
+  background: #0069d9;
 }
 button:hover {
   background: #218838;
@@ -73,9 +103,12 @@ button:hover {
   opacity: 0.5;
   margin: 5px 20px 10px;
 }
+.my-5 {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
 .status {
   color: #2490b5;
-  margin: 5px 0;
 }
 .installed {
   color: #777;
@@ -123,4 +156,51 @@ button:hover {
 }
 .close:hover {
   border: 1px solid #705326;
+}
+
+/*toggle switch*/
+.toggle .switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 25px;
+  margin-top: 6px;
+}
+.toggle .switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 20px;
+}
+.toggle .slider:before {
+  border-radius: 50%;
+}
+.toggle .slider:before {
+  position: absolute;
+  content: '';
+  height: 21px;
+  width: 21px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.4s;
+}
+.toggle input:checked + .slider {
+  background-color: #2196f3;
+}
+.toggle input:focus + .slider {
+  box-shadow: 0 0 1px #2196f3;
+}
+.toggle input:checked + .slider:before {
+  transform: translateX(14px);
 }
