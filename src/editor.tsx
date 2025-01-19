@@ -15,7 +15,7 @@ export default function ({ runCode }: EditorProps) {
   const [files, setFiles] = createSignal<File[] | null>(null)
   const [fadeOut, setFadeOut] = createSignal(false)
   let editor: monaco.editor.IStandaloneCodeEditor | null = null
-  let editorRef!: HTMLDivElement
+  const editorEl = (<div class="editor"></div>) as HTMLElement
   let statusTimeout: number
 
   onMount(async () => {
@@ -30,7 +30,7 @@ export default function ({ runCode }: EditorProps) {
     })
 
     let activeContent = getContent(initialFiles) || ''
-    editor = monaco.editor.create(editorRef, {
+    editor = monaco.editor.create(editorEl, {
       value: activeContent,
       language: 'python',
       theme: 'custom-dark',
@@ -110,39 +110,36 @@ export default function ({ runCode }: EditorProps) {
     }
   }
 
-  // noinspection JSUnusedAssignment
   return (
     <div class="col">
-      <Tabs
-        getActiveContent={getActiveContent}
-        setActiveContent={setActiveContent}
-        files={files}
-        setFiles={setFiles}
-      />
-      <div class="editor" ref={editorRef}>
-        <Show when={files() === null}>
-          <div class="loading">loading...</div>
-        </Show>
-      </div>
-      <footer>
-        <div>
-          <span class={fadeOut() ? 'middle status fade fadeout' : 'middle status fade'}>{saveStatus()}</span>
-        </div>
-        <div class="flex">
-          <div class="toggle">
-            <span class="middle">Save</span>
-            <label class="switch">
-              <input type="checkbox" checked={saveActive()} onChange={(e) => toggleSave(e.currentTarget.checked)} />
-              <span class="slider"></span>
-            </label>
-          </div>
+      <Show when={files() !== null} fallback={<div class="loading">loading...</div>}>
+        <Tabs
+          getActiveContent={getActiveContent}
+          setActiveContent={setActiveContent}
+          files={files}
+          setFiles={setFiles}
+        />
+        {editorEl}
+        <footer>
           <div>
-            <button class="run" onClick={run}>
-              Run
-            </button>
+            <span class={fadeOut() ? 'middle status fade fadeout' : 'middle status fade'}>{saveStatus()}</span>
           </div>
-        </div>
-      </footer>
+          <div class="flex">
+            <div class="toggle">
+              <span class="middle">Save</span>
+              <label class="switch">
+                <input type="checkbox" checked={saveActive()} onChange={(e) => toggleSave(e.currentTarget.checked)} />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div>
+              <button class="run" onClick={run}>
+                Run
+              </button>
+            </div>
+          </div>
+        </footer>
+      </Show>
     </div>
   )
 }
