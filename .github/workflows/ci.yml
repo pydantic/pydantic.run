@@ -54,7 +54,7 @@ jobs:
   deploy-preview:
     runs-on: ubuntu-latest
     needs: [check]
-    environment: cloudflare-workers-deploy
+    environment: deploy-preview
 
     steps:
       - uses: actions/checkout@v4
@@ -64,14 +64,14 @@ jobs:
       - uses: cloudflare/wrangler-action@v3
         name: Deploy pydantic-run-preview
         with:
-          apiToken: ${{ secrets.cloudflare_api_token }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           command: deploy --env previews --var GITHUB_SHA:${{ github.sha }}
 
   deploy:
     if: "success() && github.ref == 'refs/heads/main'"
     runs-on: ubuntu-latest
     needs: [check]
-    environment: cloudflare-workers-deploy
+    environment: deploy-prod
 
     steps:
       - uses: actions/checkout@v4
