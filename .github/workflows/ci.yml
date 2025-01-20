@@ -68,9 +68,18 @@ jobs:
           environment: previews
           command: deploy --var GITHUB_SHA:${{ github.sha }}
 
-      - run: 'echo "command-output: ${{ steps.deploy.outputs.command-output }}"'
-      - run: 'echo "deployment-url: ${{ steps.deploy.outputs.deployment-url }}"'
-      - run: 'echo "pages-deployment-alias-url: ${{ steps.deploy.outputs.pages-deployment-alias-url }}"'
+      - name: print wrangler command output
+        run: echo $CMD_OUTPUT
+        env:
+          CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
+      - name: print deployment-url
+        run: echo $DEPLOYMENT_URL
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+      - name: print pages-deployment-alias-url
+        run: echo $PAGES_DEPLOYMENT_ALIAS_URL
+        env:
+          PAGES_DEPLOYMENT_ALIAS_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url }}
 
   deploy:
     if: "success() && github.ref == 'refs/heads/main'"
