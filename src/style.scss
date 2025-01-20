@@ -1,0 +1,221 @@
+@use 'sass:color';
+
+$background: #1e1f2e;
+$border: #34364f;
+$btn-green: #28a745;
+$tab-border: #705326;
+
+html,
+body {
+  height: 100%;
+  background: $background;
+  color: white;
+  font-family: monospace;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+main {
+  width: 100%;
+  max-width: 1400px;
+  box-sizing: border-box;
+  padding: 5px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+section {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+}
+@media (max-width: 800px) {
+  section {
+    flex-direction: column;
+  }
+}
+
+h1 {
+  margin: 3px;
+}
+aside {
+  margin: 3px;
+}
+.col {
+  flex: 1;
+  padding: 5px 5px 10px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  border: 1px solid #aaa;
+  margin: 3px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+}
+pre {
+  margin: 0;
+  padding: 0;
+  white-space: pre-wrap;
+}
+a {
+  color: #58a6ff;
+  text-decoration: none;
+}
+
+.editor {
+  width: 100%;
+  flex: 1;
+  border-bottom: 1px solid $border;
+  overflow: hidden;
+}
+footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0 0;
+}
+.flex {
+  display: flex;
+}
+.middle {
+  vertical-align: middle;
+  display: inline-block;
+  margin: 10px 5px 0;
+}
+
+.fade {
+  opacity: 1;
+  transition: opacity 300ms ease-out;
+}
+.fadeout {
+  opacity: 0;
+}
+
+button {
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: 10px;
+  &.run {
+    background: $btn-green;
+  }
+  &.run:hover {
+    background: color.adjust($btn-green, $lightness: -10%);
+  }
+}
+
+.loading {
+  opacity: 0.5;
+  margin: 20px;
+}
+.my-5 {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+.status {
+  color: #2490b5;
+}
+
+.installed {
+  color: #777;
+  padding-bottom: 8px;
+  border-bottom: 1px solid $border;
+  margin-bottom: 8px;
+}
+.output {
+  overflow: auto;
+}
+.tabs {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+
+  .tab {
+    padding: 6px 8px 6px 15px;
+    cursor: pointer;
+    color: white;
+    border-top: 1px solid $border;
+    border-right: 1px solid $border;
+  }
+  .tab:hover {
+    background: #27293c;
+  }
+  .active {
+    background: $border !important;
+  }
+  .new {
+    padding: 8px 15px;
+    font-size: 1.4rem;
+    border: 1px solid transparent;
+  }
+  .new:hover {
+    border: 1px solid $tab-border;
+  }
+  .close {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 2px 6px;
+    font-size: 1.2rem;
+    border: 1px solid transparent;
+  }
+  .close:hover {
+    border: 1px solid $tab-border;
+  }
+}
+
+// toggle switch
+$toggle-active: #2196f3;
+$toggle-width: 40px;
+$toggle-height: 25px;
+$toggle-padding: 2px;
+.toggle {
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: $toggle-width;
+    height: $toggle-height;
+    margin-top: 6px;
+  }
+  input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: $toggle-height;
+  }
+  .slider:before {
+    border-radius: 50%;
+  }
+  .slider:before {
+    position: absolute;
+    content: '';
+    height: $toggle-height - 2 * $toggle-padding;
+    width: $toggle-height - 2 * $toggle-padding;
+    left: $toggle-padding;
+    bottom: $toggle-padding;
+    background-color: white;
+    transition: 0.3s;
+  }
+  input:checked + .slider {
+    background-color: $toggle-active;
+  }
+  input:focus + .slider {
+    box-shadow: 0 0 1px $toggle-active;
+  }
+  input:checked + .slider:before {
+    transform: translateX($toggle-width - $toggle-height);
+  }
+}
