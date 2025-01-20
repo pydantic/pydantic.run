@@ -119,6 +119,7 @@ export default function ({ runCode }: EditorProps) {
     const file: File = { name, content: '', activeIndex: 0 }
     setFiles((prev) => [...prev, file])
     changeFile(name)
+    editor!.focus()
   }
 
   function changeFile(newName: string) {
@@ -138,6 +139,7 @@ export default function ({ runCode }: EditorProps) {
     })
     // noinspection JSIgnoredPromiseFromCall
     save(files)
+    editor!.focus()
   }
 
   function closeFile(name: string) {
@@ -150,6 +152,7 @@ export default function ({ runCode }: EditorProps) {
     })
     // noinspection JSIgnoredPromiseFromCall
     save(files)
+    editor!.focus()
   }
 
   return (
