@@ -15,6 +15,12 @@ body {
   margin: 0;
   padding: 0;
 }
+html,
+body,
+#root,
+main {
+  height: 100%;
+}
 main {
   width: 100%;
   max-width: 1400px;
@@ -23,11 +29,6 @@ main {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-
-  @media (max-width: $mobile-limit) {
-    height: calc(100vh - 30px);
-  }
 }
 section {
   height: 100%;
