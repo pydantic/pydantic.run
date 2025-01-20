@@ -1,14 +1,15 @@
 #:schema node_modules/wrangler/config-schema.json
-name = "logfire-run"
+name = "pydantic-run"
 compatibility_date = "2025-01-09"
 main = "src/worker/src/index.ts"
+routes = ["pydantic.run/*"]
 
 [build]
 command = "npm run build"
 watch_dir = ["src/frontend/src", "src/worker/src"]
 
 [[r2_buckets]]
-bucket_name = "logfire-run"
+bucket_name = "pydantic-run"
 binding = "BUCKET"
 
 [assets]

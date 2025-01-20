@@ -35,6 +35,11 @@ jobs:
       - run: npm install
       - run: npm run build
 
+      - uses: cloudflare/wrangler-action@v3
+        name: Test monitor-prod build
+        with:
+          command: deploy --dry-run
+
   check:
     if: always()
     needs: [lint, build]
