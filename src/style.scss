@@ -24,15 +24,18 @@ main {
   display: flex;
   flex-direction: column;
   height: 100vh;
+
+  @media (max-width: 800px) {
+    height: calc(100vh - 20px);
+  }
 }
 section {
   height: 100%;
   width: 100%;
   display: flex;
   overflow: hidden;
-}
-@media (max-width: 800px) {
-  section {
+
+  @media (max-width: 800px) {
     flex-direction: column;
   }
 }
