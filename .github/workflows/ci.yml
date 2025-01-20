@@ -51,9 +51,12 @@ jobs:
           jobs: ${{ toJSON(needs) }}
 
   deploy-preview:
+    if: "success() && github.ref != 'refs/heads/main'"
     runs-on: ubuntu-latest
     needs: [check]
-    environment: deploy-preview
+    environment:
+      name: deploy-preview
+      url: ${{ steps.get_preview_url.outputs.preview_url }}
 
     steps:
       - uses: actions/checkout@v4
@@ -68,18 +71,11 @@ jobs:
           environment: previews
           command: deploy --var GITHUB_SHA:${{ github.sha }}
 
-      - name: print wrangler command output
-        run: echo $CMD_OUTPUT
+      - name: get preview URL
+        id: get_preview_url
+        run: python .github/get_preview_url.py >> $GITHUB_OUTPUT
         env:
-          CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
-      - name: print deployment-url
-        run: echo $DEPLOYMENT_URL
-        env:
-          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
-      - name: print pages-deployment-alias-url
-        run: echo $PAGES_DEPLOYMENT_ALIAS_URL
-        env:
-          PAGES_DEPLOYMENT_ALIAS_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url }}
+          DEPLOY_OUTPUT: ${{ steps.deploy.outputs.command-output }}
 
   deploy:
     if: "success() && github.ref == 'refs/heads/main'"
