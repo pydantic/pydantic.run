@@ -65,7 +65,7 @@ jobs:
         name: Deploy pydantic-run-preview
         with:
           apiToken: ${{ secrets.cloudflare_api_token }}
-          command: deploy --var -e preview GITHUB_SHA:${{ github.sha }}
+          command: deploy -e preview --var GITHUB_SHA:${{ github.sha }}
 
   deploy:
     if: "success() && github.ref == 'refs/heads/main'"
