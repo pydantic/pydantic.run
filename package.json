@@ -1,16 +1,19 @@
 {
-  "name": "logfire.run",
+  "name": "pydantic-run",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "src/*"
+  ],
   "scripts": {
     "format": "prettier --write -- .",
-    "lint": "eslint --max-warnings=0 src functions && prettier --check -- .",
-    "typecheck": "tsc --noEmit && cd functions && tsc --noEmit",
-    "dev": "vite",
-    "cfdev": "wrangler pages dev",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "lint": "eslint --max-warnings=0 src/*/src && prettier --check -- .",
+    "typecheck": "npm run --workspaces typecheck",
+    "build": "npm run --workspace=frontend build",
+    "dev": "npm run --workspace=frontend dev",
+    "cf-typegen": "npx wrangler types src/worker/worker-configuration.d.ts && prettier --write -- src/worker/worker-configuration.d.ts",
+    "cf-dev": "wrangler dev"
   },
   "prettier": {
     "singleQuote": true,
@@ -26,19 +29,10 @@
   "dependencies": {
     "@cloudflare/workers-types": "^4.20250109.0",
     "@eslint/js": "^9.18.0",
-    "ansi-to-html": "^0.7.2",
-    "monaco-editor": "^0.52.2",
     "prettier": "^3.4.2",
     "prettier-plugin-toml": "^2.0.1",
-    "pyodide": "^0.27.1",
-    "sass-embedded": "^1.83.4",
-    "solid-js": "^1.9.4",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.20.0",
-    "vite": "^6.0.5",
-    "vite-plugin-monaco-editor-esm": "^2.0.1",
-    "vite-plugin-solid": "^2.11.0",
-    "vite-plugin-static-copy": "^2.2.0",
     "wrangler": "^3.103.2"
   }
 }

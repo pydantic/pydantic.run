@@ -1,3 +1,5 @@
-# logfire.run
+# pydantic.run
 
-Run Python in the browser, log with [logfire](https://pydantic.dev/logfire).
+Python browser sandbox.
+
+Built to demonstrate [Pydantic](https://docs.pydantic.dev), [PydanticAI](https://ai.pydantic.dev), and [Pydantic Logfire](https://docs.pydantic.dev/logfire).

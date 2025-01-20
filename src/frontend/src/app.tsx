@@ -50,10 +50,8 @@ export default function () {
   return (
     <main>
       <header>
-        <h1>logfire.run</h1>
-        <aside>
-          Run Python in the browser, log with <a href="https://pydantic.dev/logfire">logfire</a>.
-        </aside>
+        <h1>pydantic.run</h1>
+        <aside>Python browser sandbox.</aside>
         <div id="counter"></div>
       </header>
       <section>

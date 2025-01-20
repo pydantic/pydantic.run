@@ -1,8 +1,4 @@
-export interface Env {
-  BUCKET: R2Bucket
-}
-
-export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
+export async function api(request: Request, env: Env): Promise<Response> {
   const { url, method } = request
   const { pathname, searchParams } = new URL(url)
   const readKey = pathname.split('/')[3]
@@ -21,7 +17,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   // check body size
   const body = await request.blob()
   if (body.size > 1024 * 10) {
-    return new Response('File too large', { status: 413 })
+    return new Response(', 10kB limit exceeded', { status: 413 })
   }
 
   if (readKey === 'new') {
