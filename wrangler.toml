@@ -3,6 +3,7 @@ name = "pydantic-run"
 compatibility_date = "2025-01-09"
 main = "src/worker/src/index.ts"
 routes = ["pydantic.run/*"]
+workers_dev = false
 
 [build]
 command = "npm run build"
@@ -15,3 +16,11 @@ binding = "BUCKET"
 [assets]
 directory = "src/frontend/dist"
 binding = "ASSETS"
+
+[env.previews]
+workers_dev = true
+routes = []
+
+[[env.previews.r2_buckets]]
+bucket_name = "pydantic-run-dev"
+binding = "BUCKET"
