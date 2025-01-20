@@ -1,59 +1,29 @@
-import { Accessor, Setter } from 'solid-js'
 import type { File } from './types'
 
 interface TabProps {
-  getActiveContent: () => string
-  setActiveContent: (content: string) => void
-  files: Accessor<File[]>
-  setFiles: Setter<File[]>
-  save: (files: File[], verbose?: boolean) => void
+  files: File[]
+  addFile: (name: string) => void
+  changeFile: (name: string) => void
+  closeFile: (name: string) => void
 }
 
-export function Tabs({ getActiveContent, setActiveContent, files, setFiles, save }: TabProps) {
+export function Tabs(props: TabProps) {
   function newTab() {
-    const activeContent = getActiveContent()
-    const newFileName = getNewName(files())
+    const newFileName = getNewName(props.files)
     if (newFileName) {
-      // set active to 0, for new file, it'll be set by changeTab
-      const file: File = { name: newFileName, content: '', activeIndex: 0 }
-      setFiles((prev) => [...prev, file])
-      changeTab(activeContent, newFileName)
+      props.addFile(newFileName)
     }
-  }
-
-  function changeTab(activeContent: string, newName: string) {
-    const files = setFiles((prev) => {
-      const active = findActive(prev)
-      return prev.map(({ name, content, activeIndex }) => {
-        if (name == newName) {
-          setActiveContent(content)
-          return { name, content, activeIndex: active + 1 }
-        } else if (activeIndex === active) {
-          return { name, content: activeContent, activeIndex }
-        } else {
-          return { name, content, activeIndex }
-        }
-      })
-    })
-    save(files)
   }
 
   function closeTab(event: MouseEvent, name: string) {
     event.stopPropagation()
-    const files = setFiles((prev) => {
-      if (prev.length === 1) {
-        return prev
-      } else {
-        return prev.filter((f) => f.name !== name)
-      }
-    })
-    save(files)
+    props.closeFile(name)
   }
 
   return (
     <div class="tabs">
-      {tabs(files()).map(({ name, active }) => (
-        <div class={active ? 'tab active' : 'tab'} onClick={() => changeTab(getActiveContent(), name)}>
+      {tabs(props.files).map(({ name, active }) => (
+        <div class={active ? 'tab active' : 'tab'} onClick={() => props.changeFile(name)}>
           {name}
           <span class="close" onClick={(e) => closeTab(e, name)}>
             ✕
