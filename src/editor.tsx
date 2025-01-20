@@ -114,16 +114,48 @@ export default function ({ runCode }: EditorProps) {
     }
   }
 
+  function addFile(name: string) {
+    // set active to 0, for new file, it'll be set by changeTab
+    const file: File = { name, content: '', activeIndex: 0 }
+    setFiles((prev) => [...prev, file])
+    changeFile(name)
+  }
+
+  function changeFile(newName: string) {
+    const activeContent = getActiveContent()
+    const files = setFiles((prev) => {
+      const active = findActive(prev)
+      return prev.map(({ name, content, activeIndex }) => {
+        if (name == newName) {
+          setActiveContent(content)
+          return { name, content, activeIndex: active + 1 }
+        } else if (activeIndex === active) {
+          return { name, content: activeContent, activeIndex }
+        } else {
+          return { name, content, activeIndex }
+        }
+      })
+    })
+    // noinspection JSIgnoredPromiseFromCall
+    save(files)
+  }
+
+  function closeFile(name: string) {
+    const files = setFiles((prev) => {
+      if (prev.length === 1) {
+        return prev
+      } else {
+        return prev.filter((f) => f.name !== name)
+      }
+    })
+    // noinspection JSIgnoredPromiseFromCall
+    save(files)
+  }
+
   return (
     <div class="col">
       <Show when={files().length} fallback={<div class="loading">loading...</div>}>
-        <Tabs
-          getActiveContent={getActiveContent}
-          setActiveContent={setActiveContent}
-          files={files}
-          setFiles={setFiles}
-          save={save}
-        />
+        <Tabs files={files()} addFile={addFile} changeFile={changeFile} closeFile={closeFile} />
         {editorEl}
         <footer>
           <div>
