@@ -62,12 +62,15 @@ jobs:
 
       - uses: cloudflare/wrangler-action@v3
         name: Deploy pydantic-run-preview
-        id: wrangler
+        id: deploy
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          command: deploy --env previews --var GITHUB_SHA:${{ github.sha }}
+          environment: previews
+          command: deploy --var GITHUB_SHA:${{ github.sha }}
 
-      - run: 'echo "OUTPUT: ${{ steps.wrangler.outputs }}"'
+      - run: 'echo "command-output: ${{ steps.deploy.outputs.command-output }}"'
+      - run: 'echo "deployment-url: ${{ steps.deploy.outputs.deployment-url }}"'
+      - run: 'echo "pages-deployment-alias-url: ${{ steps.deploy.outputs.pages-deployment-alias-url }}"'
 
   deploy:
     if: "success() && github.ref == 'refs/heads/main'"
