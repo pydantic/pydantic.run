@@ -7,10 +7,6 @@ interface StoreResponse {
   writeKey: string
 }
 
-export function storeLocal(files: File[]) {
-  localStorage.setItem(`files:${location.pathname}`, JSON.stringify(files))
-}
-
 export async function store(files: File[] | null): Promise<string | null> {
   const readKey = getReadKey(location.pathname)
   const body = JSON.stringify({ files })
@@ -63,12 +59,7 @@ export async function retrieve(): Promise<File[]> {
       return f
     }
   }
-  const localFiles = localStorage.getItem(`files:${location.pathname}`)
-  if (localFiles) {
-    return JSON.parse(localFiles)
-  } else {
-    return [{ name: 'main.py', content: defaultPythonCode, activeIndex: 0 }]
-  }
+  return [{ name: 'main.py', content: defaultPythonCode, activeIndex: 0 }]
 }
 
 async function retrieveStored(path: string): Promise<File[] | null> {

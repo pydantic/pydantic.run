@@ -2,7 +2,7 @@ import { onMount, createSignal, Show } from 'solid-js'
 
 import type * as monaco from 'monaco-editor'
 import type { File } from './types'
-import { retrieve, store, storeLocal } from './store.ts'
+import { retrieve, store } from './store.ts'
 import { Tabs, findActive } from './tabs'
 
 interface EditorProps {
@@ -55,7 +55,6 @@ export default function ({ runCode }: EditorProps) {
 
   async function save(files: File[], verbose: boolean = false) {
     if (!saveActive()) {
-      storeLocal(files)
       return
     }
     let msg: string | null = null
