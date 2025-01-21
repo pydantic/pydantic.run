@@ -6,14 +6,17 @@ Some of this is taken from https://github.com/alexmojaki/pyodide-worker-runner/b
 from __future__ import annotations as _annotations
 import importlib
 import json
+import logging
 import re
 import sys
 import traceback
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any, TypedDict, Iterable
 import importlib.util
 
 import micropip  # noqa
+from micropip import logging as micropip_logging  # noqa
 import tomllib
 from pyodide.code import find_imports  # noqa
 import pyodide_js  # noqa
@@ -31,7 +34,7 @@ class File(TypedDict):
     activeIndex: int
 
 
-async def install_deps(files: list[File]) -> str | None:
+async def install_deps(files: list[File]) -> str:
     cwd = Path.cwd()
     for file in cwd.iterdir():
         if file.name != 'run.py' and file.is_file():
@@ -54,13 +57,22 @@ async def install_deps(files: list[File]) -> str | None:
         dependencies = await _find_import_dependencies(files)
     new_dependencies = dependencies - _already_installed
     if new_dependencies:
-        await micropip.install(new_dependencies)
+        with _micropip_logging() as file_name:
+            try:
+                await micropip.install(new_dependencies, keep_going=True)
+                importlib.invalidate_caches()
+            except Exception:
+                message = []
+                with open(file_name) as f:
+                    message.append(f.read())
+                message.append(traceback.format_exc())
+                return json.dumps({'kind': 'error', 'message': '\n'.join(message)})
+
         _already_installed.update(new_dependencies)
-        importlib.invalidate_caches()
         if 'logfire' in new_dependencies:
             _prep_logfire()
 
-    return json.dumps(list(_already_installed))
+    return json.dumps({'kind': 'success', 'message': list(_already_installed)})
 
 
 def run_code(file: str) -> None:
@@ -79,12 +91,30 @@ def run_code(file: str) -> None:
         print(_filtered_traceback(exc), file=sys.stderr)
 
 
+@contextmanager
+def _micropip_logging() -> Iterable[str]:
+    micropip_logging.setup_logging()
+    logger = logging.getLogger('micropip')
+    logger.handlers.clear()
+    logger.setLevel(logging.INFO)
+
+    file_name = 'micropip.log'
+    handler = logging.FileHandler(file_name)
+    handler.setLevel(logging.INFO)
+    handler.setFormatter(logging.Formatter('%(message)s'))
+    logger.addHandler(handler)
+    try:
+        yield file_name
+    finally:
+        logger.removeHandler(handler)
+
+
 def _filtered_traceback(exc: BaseException) -> str:
     # Retrieve the full traceback as a list of strings
     tb_lines = traceback.format_exception(type(exc), exc, exc.__traceback__)
 
     # Filter out the lines where file is not a real file - e.g. this code
-    return ''.join(line for line in tb_lines if not line.startswith('  File "<'))
+    return ''.join(line for line in tb_lines if not line.startswith(('  File "<', '  File "/home/pyodide/run.py"')))
 
 
 def _prep_logfire():

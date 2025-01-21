@@ -22,7 +22,7 @@ export interface Error {
 
 export interface Installed {
   kind: 'installed'
-  installed: string[]
+  message: string
 }
 
 export interface Status {
