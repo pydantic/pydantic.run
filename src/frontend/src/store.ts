@@ -8,15 +8,11 @@ interface StoreResponse {
 }
 
 export function storeLocal(files: File[]) {
-  const { pathname } = location
-  if (pathname === '/') {
-    localStorage.setItem('files', JSON.stringify(files))
-  }
+  localStorage.setItem(`files:${location.pathname}`, JSON.stringify(files))
 }
 
 export async function store(files: File[] | null): Promise<string | null> {
-  const { pathname } = location
-  const readKey = getReadKey(pathname)
+  const readKey = getReadKey(location.pathname)
   const body = JSON.stringify({ files })
   let url = '/api/store/new'
   let writeKey: string | null = null
@@ -61,14 +57,13 @@ export async function store(files: File[] | null): Promise<string | null> {
 const getWriteKey = (readKey: string) => `getWriteKey:${readKey}`
 
 export async function retrieve(): Promise<File[]> {
-  const { pathname } = new URL(window.location.href)
-  if (pathname.startsWith('/store/')) {
-    const f = await retrieveStored(pathname)
+  if (location.pathname.startsWith('/store/')) {
+    const f = await retrieveStored(location.pathname)
     if (f) {
       return f
     }
   }
-  const localFiles = localStorage.getItem('files')
+  const localFiles = localStorage.getItem(`files:${location.pathname}`)
   if (localFiles) {
     return JSON.parse(localFiles)
   } else {
