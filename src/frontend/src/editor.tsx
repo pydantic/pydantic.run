@@ -2,7 +2,7 @@ import { onMount, createSignal, Show } from 'solid-js'
 
 import type * as monaco from 'monaco-editor'
 import type { File } from './types'
-import { retrieve, store } from './store.ts'
+import { retrieve, store, storeLocal } from './store.ts'
 import { Tabs, findActive } from './tabs'
 
 interface EditorProps {
@@ -17,6 +17,7 @@ export default function ({ runCode }: EditorProps) {
   let editor: monaco.editor.IStandaloneCodeEditor | null = null
   const editorEl = (<div class="editor" />) as HTMLElement
   let statusTimeout: number
+  let clearSaveTimeout: number
 
   onMount(async () => {
     const [{ monaco }, initialFiles] = await Promise.all([import('./monacoEditor'), retrieve()])
@@ -31,9 +32,8 @@ export default function ({ runCode }: EditorProps) {
 
     const active = findActive(initialFiles)
     const file = initialFiles.find((f) => f.activeIndex === active)
-    let activeContent = file ? file.content : ''
     editor = monaco.editor.create(editorEl, {
-      value: activeContent,
+      value: file ? file.content : '',
       language: 'python',
       theme: 'custom-dark',
       automaticLayout: true,
@@ -47,18 +47,15 @@ export default function ({ runCode }: EditorProps) {
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, run)
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => save(updateFiles(getActiveContent()), true))
-
-    setInterval(() => {
-      const newActiveContent = getActiveContent()
-      if (newActiveContent !== activeContent) {
-        activeContent = newActiveContent
-        save(updateFiles(activeContent))
-      }
-    }, 5000)
+    editor.onDidChangeModelContent(() => {
+      clearTimeout(clearSaveTimeout)
+      clearSaveTimeout = setTimeout(() => save(updateFiles(getActiveContent())), 1000)
+    })
   })
 
   async function save(files: File[], verbose: boolean = false) {
     if (!saveActive()) {
+      storeLocal(files)
       return
     }
     let msg: string | null = null
