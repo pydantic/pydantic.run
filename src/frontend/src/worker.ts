@@ -70,7 +70,7 @@ async function getPyodide(): Promise<PyodideInterface> {
     })
     console.log('Pyodide version', pyodide.version)
     setupStreams(pyodide)
-    await pyodide.loadPackage(['micropip', 'pygments'])
+    await pyodide.loadPackage(['micropip'])
 
     const pathlib = pyodide.pyimport('pathlib')
     pathlib.Path('run.py').write_text(pythonCode)
