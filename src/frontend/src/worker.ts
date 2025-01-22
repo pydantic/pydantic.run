@@ -1,6 +1,6 @@
 /* eslint @typescript-eslint/no-explicit-any: off */
 import { loadPyodide, PyodideInterface, version as pyodideVersion } from 'pyodide'
-import pythonCode from './run.py?raw'
+import installPythonCode from './install_dependencies.py?raw'
 import type { File, RunCode, WorkerResponse } from './types'
 
 interface InstallSuccess {
@@ -23,7 +23,7 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
     post({ kind: 'status', message: `${msg}Installing dependencies…` })
 
     const [installTime, installedOutput]: [number, string] = await time(
-      pyodide.runPython('import run; run.install_deps(files)', {
+      pyodide.runPython('import _install_dependencies; _install_dependencies.install_deps(files)', {
         globals: pyodide.toPy({ files: files }),
       }),
     )
@@ -66,7 +66,7 @@ function formatError(err: any): string {
     return errStr
   }
   errStr = errStr.replace(/^PythonError: +/, '')
-  // remove frames prior to form inside pyodide
+  // remove frames from inside pyodide
   errStr = errStr.replace(/ {2}File "\/lib\/python\d+\.zip\/_pyodide\/.*\n {4}.*\n(?: {4,}\^+\n)?/g, '')
   return errStr
 }
@@ -96,9 +96,13 @@ async function getPyodide(): Promise<PyodideInterface> {
     setupStreams(pyodide)
     await pyodide.loadPackage(['micropip', 'pygments'])
 
+    const dirPath = '/tmp/pydantic_run'
+    pyodide.pyimport('sys').path.append(dirPath)
     const pathlib = pyodide.pyimport('pathlib')
-    pathlib.Path('run.py').write_text(pythonCode)
-    pyodide.pyimport('run')
+    pathlib.Path(dirPath).mkdir()
+    const moduleName = '_install_dependencies'
+    pathlib.Path(`${dirPath}/${moduleName}.py`).write_text(installPythonCode)
+    pyodide.pyimport(moduleName)
 
     loadedPyodide = pyodide
   }
