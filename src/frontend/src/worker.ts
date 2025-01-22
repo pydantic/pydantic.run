@@ -3,6 +3,15 @@ import { loadPyodide, PyodideInterface, version as pyodideVersion } from 'pyodid
 import pythonCode from './run.py?raw'
 import type { File, RunCode, WorkerResponse } from './types'
 
+interface InstallSuccess {
+  kind: 'success'
+  message: string
+}
+interface InstallError {
+  kind: 'error'
+  message: string
+}
+
 self.onmessage = async ({ data }: { data: RunCode }) => {
   const { files, warmup } = data
   let msg = ''
@@ -13,15 +22,18 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
     }
     post({ kind: 'status', message: `${msg}Installing dependencies…` })
 
-    const [installTime, installedJson] = await time(
+    const [installTime, installedOutput]: [number, string] = await time(
       pyodide.runPythonAsync('import run; run.install_deps(files)', {
         globals: pyodide.toPy({ files: files }),
       }),
     )
-    const installed = JSON.parse(installedJson as string)
-    if (installed) {
-      post({ kind: 'installed', installed })
+    const installStatus: InstallSuccess | InstallError = JSON.parse(installedOutput)
+    if (installStatus.kind == 'error') {
+      post({ kind: 'status', message: `${msg}Error occurred` })
+      post({ kind: 'error', message: installStatus.message })
+      return
     }
+    post({ kind: 'installed', message: installStatus.message })
     if (installTime > 50) {
       msg += `Installed dependencies in ${asMs(installTime)}, `
     }
