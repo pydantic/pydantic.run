@@ -23,7 +23,7 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
     post({ kind: 'status', message: `${msg}Installing dependencies…` })
 
     const [installTime, installedOutput]: [number, string] = await time(
-      pyodide.runPythonAsync('import run; run.install_deps(files)', {
+      pyodide.runPython('import run; run.install_deps(files)', {
         globals: pyodide.toPy({ files: files }),
       }),
     )
@@ -44,19 +44,31 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
     post({ kind: 'status', message: `${msg}running code…` })
 
     const active = findActive(files)
-    const activeFile = files.find((f) => f.activeIndex === active)!.name
+    const activeFile = files.find((f) => f.activeIndex === active)!
     const [execTime] = await time(
-      pyodide.runPythonAsync('import run; run.run_code(file)', {
-        globals: pyodide.toPy({ file: activeFile }),
+      pyodide.runPythonAsync(activeFile.content, {
+        globals: pyodide.toPy({ __name__: '__main__' }),
+        filename: activeFile.name,
       }),
     )
     postPrint()
     post({ kind: 'status', message: `${msg}ran code in ${asMs(execTime)}` })
   } catch (err) {
-    console.error(err)
+    console.warn(err)
     post({ kind: 'status', message: `${msg}Error occurred` })
-    post({ kind: 'error', message: (err as any).toString() })
+    post({ kind: 'error', message: formatError(err) })
   }
+}
+
+function formatError(err: any): string {
+  let errStr = (err as any).toString()
+  if (!errStr.startsWith('PythonError:')) {
+    return errStr
+  }
+  errStr = errStr.replace(/^PythonError: +/, '')
+  // remove frames prior to form inside pyodide
+  errStr = errStr.replace(/ {2}File "\/lib\/python\d+\.zip\/_pyodide\/.*\n {4}.*\n(?: {4,}\^+\n)?/g, '')
+  return errStr
 }
 
 function asMs(time: number) {

@@ -21,7 +21,7 @@ import tomllib
 from pyodide.code import find_imports  # noqa
 import pyodide_js  # noqa
 
-__all__ = 'install_deps', 'run_code'
+__all__ = ('install_deps',)
 
 sys.setrecursionlimit(400)
 _already_installed: set[str] = set()
@@ -75,22 +75,6 @@ async def install_deps(files: list[File]) -> str:
     return json.dumps({'kind': 'success', 'message': list(_already_installed)})
 
 
-def run_code(file: str) -> None:
-    try:
-        file_path = Path(file)
-        spec = importlib.util.spec_from_file_location('__main__', file_path)
-        module = importlib.util.module_from_spec(spec)
-        # sys.modules['__main__'] = module
-    except Exception:
-        traceback.print_exc()
-        raise
-
-    try:
-        spec.loader.exec_module(module)
-    except BaseException as exc:
-        print(_filtered_traceback(exc), file=sys.stderr)
-
-
 @contextmanager
 def _micropip_logging() -> Iterable[str]:
     micropip_logging.setup_logging()
@@ -107,14 +91,6 @@ def _micropip_logging() -> Iterable[str]:
         yield file_name
     finally:
         logger.removeHandler(handler)
-
-
-def _filtered_traceback(exc: BaseException) -> str:
-    # Retrieve the full traceback as a list of strings
-    tb_lines = traceback.format_exception(type(exc), exc, exc.__traceback__)
-
-    # Filter out the lines where file is not a real file - e.g. this code
-    return ''.join(line for line in tb_lines if not line.startswith(('  File "<', '  File "/home/pyodide/run.py"')))
 
 
 def _prep_logfire():
