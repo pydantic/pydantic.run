@@ -27,7 +27,7 @@ export default function () {
       } else if (data.kind == 'error') {
         terminalOutput += data.message
       } else if (data.kind == 'installed') {
-        setInstalled(`Installed dependencies: ${data.message}`)
+        setInstalled(data.message.length > 0 ? `Installed dependencies: ${data.message}` : '')
       } else {
         setStatus(data.message)
       }
