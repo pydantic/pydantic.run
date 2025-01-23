@@ -72,7 +72,7 @@ async def install_deps(files: list[File]) -> str:
         if 'logfire' in new_dependencies:
             _prep_logfire()
 
-    return json.dumps({'kind': 'success', 'message': list(_already_installed)})
+    return json.dumps({'kind': 'success', 'message': ', '.join(sorted(_already_installed))})
 
 
 @contextmanager
