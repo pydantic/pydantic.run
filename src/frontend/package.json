@@ -13,7 +13,7 @@
     "@eslint/js": "^9.18.0",
     "ansi-to-html": "^0.7.2",
     "monaco-editor": "^0.52.2",
-    "pyodide": "^0.27.1",
+    "pyodide": "^0.27.2",
     "sass-embedded": "^1.83.4",
     "solid-js": "^1.9.4",
     "typescript-eslint": "^8.20.0",
