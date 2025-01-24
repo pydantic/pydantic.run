@@ -12,7 +12,7 @@
     "typecheck": "npm run --workspaces typecheck",
     "build": "npm run --workspace=frontend build",
     "dev": "npm run --workspace=frontend dev",
-    "cf-typegen": "wrangler types src/worker/worker-configuration.d.ts && prettier --write -- src/worker/worker-configuration.d.ts",
+    "cf-typegen": "wrangler types src/cf_worker/worker-configuration.d.ts && prettier --write -- src/cf_worker/worker-configuration.d.ts",
     "cf-dev": "wrangler dev"
   },
   "prettier": {
