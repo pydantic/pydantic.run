@@ -68,8 +68,8 @@ async def install_deps(files: list[File]) -> Success | Error:
         dependencies = _find_pep723_dependencies(active['content'])
     if dependencies is None:
         dependencies = await _find_import_dependencies(files)
-
     new_dependencies = {dep: None for dep in dependencies if dep not in _all_dependencies}
+
     if new_dependencies:
         with _micropip_logging() as file_name:
             try:
@@ -103,14 +103,6 @@ def _micropip_logging() -> Iterable[str]:
         yield file_name
     finally:
         logger.removeHandler(handler)
-
-
-def _micropip_error(file_name: str) -> Error:
-    message = []
-    with open(file_name) as f:
-        message.append(f.read())
-    message.append(traceback.format_exc())
-    return Error(message='\n'.join(message))
 
 
 def _prep_logfire():
