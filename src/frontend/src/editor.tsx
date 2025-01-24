@@ -152,7 +152,7 @@ export default function ({ runCode }: EditorProps) {
   }
 
   return (
-    <div class="col">
+    <div class="col pb-10">
       <Show when={files().length} fallback={<div class="loading">loading...</div>}>
         <Tabs files={files()} addFile={addFile} changeFile={changeFile} closeFile={closeFile} />
         {editorEl}

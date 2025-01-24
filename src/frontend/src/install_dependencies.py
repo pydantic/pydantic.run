@@ -5,14 +5,14 @@ Some of this is taken from https://github.com/alexmojaki/pyodide-worker-runner/b
 """
 from __future__ import annotations as _annotations
 import importlib
-import json
 import logging
 import re
 import sys
 import traceback
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, TypedDict, Iterable
+from typing import Any, TypedDict, Iterable, Literal
 import importlib.util
 
 import micropip  # noqa
@@ -24,7 +24,8 @@ import pyodide_js  # noqa
 __all__ = ('install_deps',)
 
 sys.setrecursionlimit(400)
-_already_installed: set[str] = set()
+# user a dict here to maintain order
+_all_dependencies: dict[str, None] = {}
 _logfire_configured = False
 
 
@@ -34,7 +35,19 @@ class File(TypedDict):
     activeIndex: int
 
 
-async def install_deps(files: list[File]) -> str:
+@dataclass
+class Success:
+    message: str
+    kind: Literal['success'] = 'success'
+
+
+@dataclass
+class Error:
+    message: str
+    kind: Literal['error'] = 'error'
+
+
+async def install_deps(files: list[File]) -> Success | Error:
     cwd = Path.cwd()
     for file in cwd.iterdir():
         if file.name != 'run.py' and file.is_file():
@@ -42,7 +55,7 @@ async def install_deps(files: list[File]) -> str:
     for file in files:
         (cwd / file['name']).write_text(file['content'])
 
-    dependencies: set[str] = set()
+    dependencies: dict[str, None] = {}
     active: File | None = None
     highest = -1
     for file in files:
@@ -55,24 +68,23 @@ async def install_deps(files: list[File]) -> str:
         dependencies = _find_pep723_dependencies(active['content'])
     if dependencies is None:
         dependencies = await _find_import_dependencies(files)
-    new_dependencies = dependencies - _already_installed
+
+    new_dependencies = {dep: None for dep in dependencies if dep not in _all_dependencies}
     if new_dependencies:
         with _micropip_logging() as file_name:
             try:
-                await micropip.install(new_dependencies, keep_going=True)
+                await micropip.install(new_dependencies.keys(), keep_going=True)
                 importlib.invalidate_caches()
             except Exception:
-                message = []
                 with open(file_name) as f:
-                    message.append(f.read())
-                message.append(traceback.format_exc())
-                return json.dumps({'kind': 'error', 'message': '\n'.join(message)})
+                    logs = f.read()
+                return Error(message=f'{logs}\n{traceback.format_exc()}')
 
-        _already_installed.update(new_dependencies)
+        _all_dependencies.update(new_dependencies)
         if 'logfire' in new_dependencies:
             _prep_logfire()
 
-    return json.dumps({'kind': 'success', 'message': ', '.join(sorted(_already_installed))})
+    return Success(message=', '.join(_all_dependencies.keys()))
 
 
 @contextmanager
@@ -91,6 +103,14 @@ def _micropip_logging() -> Iterable[str]:
         yield file_name
     finally:
         logger.removeHandler(handler)
+
+
+def _micropip_error(file_name: str) -> Error:
+    message = []
+    with open(file_name) as f:
+        message.append(f.read())
+    message.append(traceback.format_exc())
+    return Error(message='\n'.join(message))
 
 
 def _prep_logfire():
@@ -131,7 +151,7 @@ def _prep_logfire():
     _logfire_configured = True
 
 
-def _find_pep723_dependencies(script: str) -> set[str] | None:
+def _find_pep723_dependencies(script: str) -> dict[str, None] | None:
     """Extract dependencies from a script with PEP 723 metadata."""
     metadata = _read_pep723_metadata(script)
     dependencies = metadata.get('dependencies')
@@ -140,7 +160,7 @@ def _find_pep723_dependencies(script: str) -> set[str] | None:
     else:
         assert isinstance(dependencies, list), 'dependencies must be a list'
         assert all(isinstance(dep, str) for dep in dependencies), 'dependencies must be a list of strings'
-        return set(dependencies)
+        return {dep: None for dep in dependencies}
 
 
 def _read_pep723_metadata(script: str) -> dict[str, Any]:
@@ -165,9 +185,9 @@ def _read_pep723_metadata(script: str) -> dict[str, Any]:
         return {}
 
 
-async def _find_import_dependencies(files: list[File]) -> set[str]:
+async def _find_import_dependencies(files: list[File]) -> dict[str, None]:
     """Find dependencies in imports."""
-    deps: set[str] = set()
+    deps: dict[str, None] = {}
     for file in files:
         try:
             imports: list[str] = find_imports(file['content'])
@@ -178,14 +198,14 @@ async def _find_import_dependencies(files: list[File]) -> set[str]:
     return deps
 
 
-def _find_imports_to_install(imports: list[str]) -> set[str]:
+def _find_imports_to_install(imports: list[str]) -> dict[str, None]:
     """Given a list of module names being imported, return package that are not installed."""
     to_package_name = pyodide_js._api._import_name_to_package_name.to_py()
 
-    to_install: set[str] = set()
+    to_install: dict[str, None] = {}
     for module in imports:
         try:
             importlib.import_module(module)
         except ModuleNotFoundError:
-            to_install.add(to_package_name.get(module, module))
+            to_install[to_package_name.get(module, module)] = None
     return to_install

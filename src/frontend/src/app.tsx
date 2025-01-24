@@ -12,6 +12,7 @@ export default function () {
   const [status, setStatus] = createSignal('Launching Python...')
   const [installed, setInstalled] = createSignal('')
   const [outputHtml, setOutputHtml] = createSignal('')
+  const [versions, setVersions] = createSignal('')
   let terminalOutput = ''
   let worker: Worker
   let outputRef!: HTMLPreElement
@@ -19,21 +20,29 @@ export default function () {
   onMount(async () => {
     worker = new Worker()
     worker.onmessage = ({ data }: { data: WorkerResponse }) => {
+      let newTerminalOutput = false
       if (data.kind == 'print') {
+        newTerminalOutput = true
         for (const chunk of data.data) {
           const arr = new Uint8Array(chunk)
           terminalOutput += decoder.decode(arr)
         }
+      } else if (data.kind == 'status') {
+        setStatus(data.message)
       } else if (data.kind == 'error') {
+        newTerminalOutput = true
         terminalOutput += data.message
       } else if (data.kind == 'installed') {
         setInstalled(data.message.length > 0 ? `Installed dependencies: ${data.message}` : '')
       } else {
-        setStatus(data.message)
+        setVersions(data.message)
       }
-      setOutputHtml(ansiConverter.toHtml(escapeHTML(terminalOutput)))
-      // scrolls to the bottom of the div
-      outputRef.scrollTop = outputRef.scrollHeight
+
+      if (newTerminalOutput) {
+        setOutputHtml(ansiConverter.toHtml(escapeHTML(terminalOutput)))
+        // scrolls to the bottom of the div
+        outputRef.scrollTop = outputRef.scrollHeight
+      }
     }
   })
 
@@ -60,6 +69,7 @@ export default function () {
           <div class="status my-5">{status()}</div>
           <div class="installed">{installed()}</div>
           <pre class="output" innerHTML={outputHtml()} ref={outputRef}></pre>
+          <div class="status text-right smaller">{versions()}</div>
         </div>
       </section>
     </main>

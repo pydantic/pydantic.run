@@ -22,12 +22,11 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
     }
     post({ kind: 'status', message: `${msg}Installing dependencies…` })
 
-    const [installTime, installedOutput]: [number, string] = await time(
+    const [installTime, installStatus]: [number, InstallSuccess | InstallError] = await time(
       pyodide.runPython('import _install_dependencies; _install_dependencies.install_deps(files)', {
         globals: pyodide.toPy({ files: files }),
       }),
     )
-    const installStatus: InstallSuccess | InstallError = JSON.parse(installedOutput)
     if (installStatus.kind == 'error') {
       post({ kind: 'status', message: `${msg}Error occurred` })
       post({ kind: 'error', message: installStatus.message })
@@ -92,12 +91,17 @@ async function getPyodide(): Promise<PyodideInterface> {
     const pyodide = await loadPyodide({
       indexURL: `https://cdn.jsdelivr.net/pyodide/v${pyodideVersion}/full/`,
     })
-    console.log('Pyodide version', pyodide.version)
+    const sys = pyodide.pyimport('sys')
+    const pv = sys.version_info
+    post({
+      kind: 'versions',
+      message: `Python: ${pv.major}.${pv.minor}.${pv.micro} Pyodide: ${pyodide.version}`,
+    })
     setupStreams(pyodide)
     await pyodide.loadPackage(['micropip', 'pygments'])
 
     const dirPath = '/tmp/pydantic_run'
-    pyodide.pyimport('sys').path.append(dirPath)
+    sys.path.append(dirPath)
     const pathlib = pyodide.pyimport('pathlib')
     pathlib.Path(dirPath).mkdir()
     const moduleName = '_install_dependencies'

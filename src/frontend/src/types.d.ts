@@ -14,20 +14,9 @@ export interface Print {
   kind: 'print'
   data: ArrayBuffer[]
 }
-
-export interface Error {
-  kind: 'error'
+export interface Message {
+  kind: 'status' | 'error' | 'versions' | 'installed'
   message: string
 }
 
-export interface Installed {
-  kind: 'installed'
-  message: string
-}
-
-export interface Status {
-  kind: 'status'
-  message: string
-}
-
-export type WorkerResponse = Print | Error | Installed | Status
+export type WorkerResponse = Print | Message

@@ -49,7 +49,7 @@ aside {
 }
 .col {
   flex: 1;
-  padding: 5px 5px 10px;
+  padding: 5px;
   overflow-y: scroll;
   overflow-x: hidden;
   border: 1px solid #aaa;
@@ -119,6 +119,9 @@ button {
   margin-top: 5px;
   margin-bottom: 5px;
 }
+.pb-10 {
+  padding-bottom: 10px;
+}
 .status {
   color: #2490b5;
 }
@@ -131,6 +134,13 @@ button {
 }
 .output {
   overflow: auto;
+  flex: 2;
+}
+.text-right {
+  text-align: right;
+}
+.smaller {
+  font-size: 0.9rem;
 }
 .tabs {
   display: flex;
