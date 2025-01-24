@@ -1,12 +1,13 @@
-export async function api(request: Request, env: Env): Promise<Response> {
-  const { url, method } = request
-  const { pathname, searchParams } = new URL(url)
+export const MAX_FILE_SIZE = 1024 * 10
+
+export async function api(url: URL, request: Request, env: Env): Promise<Response> {
+  const { pathname, searchParams } = url
   const readKey = pathname.split('/')[3]
-  if (method === 'GET') {
+  if (request.method === 'GET') {
     return await get(readKey, env)
   }
 
-  if (method !== 'POST') {
+  if (request.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
   }
 
@@ -16,8 +17,8 @@ export async function api(request: Request, env: Env): Promise<Response> {
   }
   // check body size
   const body = await request.blob()
-  if (body.size > 1024 * 10) {
-    return new Response(', 10kB limit exceeded', { status: 413 })
+  if (body.size > MAX_FILE_SIZE) {
+    return new Response('Invalid body, 10kB limit exceeded', { status: 413 })
   }
 
   if (readKey === 'new') {
@@ -59,7 +60,7 @@ async function storeExisting(body: Blob, readKey: string, search: URLSearchParam
   }
   const object = await env.BUCKET.get(writeKeyPath(readKey))
   if (!object) {
-    return new Response('Project not found', { status: 404 })
+    return new Response('Unauthorized - wrong writeKey (none found)', { status: 403 })
   }
   const realWriteKey = await object.text()
   if (realWriteKey !== writeKey) {
@@ -70,7 +71,7 @@ async function storeExisting(body: Blob, readKey: string, search: URLSearchParam
   return new Response('ok')
 }
 
-const filesPath = (readKey: string) => `${readKey}/files`
+export const filesPath = (readKey: string) => `${readKey}/files`
 const writeKeyPath = (readKey: string) => `${readKey}/writeKey`
 
 export function generateHex(length: number): string {
@@ -80,4 +81,5 @@ export function generateHex(length: number): string {
   return toHexString(array).substring(0, length)
 }
 
-const toHexString = (array: Uint8Array) => Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('')
+export const toHexString = (array: Uint8Array) =>
+  Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('')

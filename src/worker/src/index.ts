@@ -1,10 +1,13 @@
 import { api } from './api'
+import { createNew } from './new'
 
 export default {
   async fetch(request, env): Promise<Response> {
     const url = new URL(request.url)
     if (url.pathname.startsWith('/api/')) {
-      return await api(request, env)
+      return await api(url, request, env)
+    } else if (url.pathname === '/new' || url.pathname === '/new/') {
+      return await createNew(url, request, env)
     } else if (url.pathname.startsWith('/store/')) {
       url.pathname = '/'
       return await env.ASSETS.fetch(url, request)

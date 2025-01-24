@@ -5,5 +5,8 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
   }
 }

@@ -3,6 +3,7 @@
     "target": "esnext",
     "module": "esnext",
     "lib": ["esnext"],
+    "moduleResolution": "Bundler",
 
     /* Linting */
     "strict": true,
