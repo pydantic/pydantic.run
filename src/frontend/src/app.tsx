@@ -39,7 +39,9 @@ export default function () {
       }
 
       if (newTerminalOutput) {
-        setOutputHtml(ansiConverter.toHtml(escapeHTML(terminalOutput)))
+        // console.log('escapeHTML(terminalOutput)', {escaedterminalOutput: escapeHTML(terminalOutput)})
+        // console.log('ansiConverter.toHtml(escapeHTML(terminalOutput))', ansiConverter.toHtml(escapeHTML(terminalOutput)))
+        setOutputHtml(ansiConverter.toHtml(escapeHTML(replaceAnsiLinks(terminalOutput))))
         // scrolls to the bottom of the div
         outputRef.scrollTop = outputRef.scrollHeight
       }
@@ -80,4 +82,9 @@ const escapeEl = document.createElement('textarea')
 function escapeHTML(html: string): string {
   escapeEl.textContent = html
   return escapeEl.innerHTML
+}
+
+function replaceAnsiLinks(terminalOutput: string): string {
+  // '\u001b]8;id=651476;
+  return terminalOutput.replace(/\\u001b]8;id=\d+;/g, '\u001b]8;;')
 }

@@ -16,17 +16,18 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
   const { files, warmup } = data
   let msg = ''
   try {
-    const [setupTime, pyodide] = await time(getPyodide())
+    const [setupTime, { pyodide, installDepsModule }] = await time(getPyodide())
     if (setupTime > 50) {
       msg += `Started Python in ${asMs(setupTime)}, `
     }
     post({ kind: 'status', message: `${msg}Installing dependencies…` })
+    const sys = pyodide.pyimport('sys')
 
     const [installTime, installStatus]: [number, InstallSuccess | InstallError] = await time(
-      pyodide.runPython('import _install_dependencies; _install_dependencies.install_deps(files)', {
-        globals: pyodide.toPy({ files: files }),
-      }),
+      installDepsModule.install_deps(pyodide.toPy(files)),
     )
+    sys.stdout.flush()
+    sys.stderr.flush()
     if (installStatus.kind == 'error') {
       post({ kind: 'status', message: `${msg}Error occurred` })
       post({ kind: 'error', message: installStatus.message })
@@ -50,6 +51,8 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
         filename: activeFile.name,
       }),
     )
+    sys.stdout.flush()
+    sys.stderr.flush()
     postPrint()
     post({ kind: 'status', message: `${msg}ran code in ${asMs(execTime)}` })
   } catch (err) {
@@ -84,10 +87,15 @@ async function time<T>(promise: Promise<T>): Promise<[number, T]> {
   return [performance.now() - start, result]
 }
 
-let loadedPyodide: PyodideInterface | null = null
+interface PyodideRunner {
+  pyodide: PyodideInterface
+  installDepsModule: any
+}
 
-async function getPyodide(): Promise<PyodideInterface> {
-  if (!loadedPyodide) {
+let pyodideRunner: PyodideRunner | null = null
+
+async function getPyodide(): Promise<PyodideRunner> {
+  if (!pyodideRunner) {
     const pyodide = await loadPyodide({
       indexURL: `https://cdn.jsdelivr.net/pyodide/v${pyodideVersion}/full/`,
     })
@@ -106,11 +114,11 @@ async function getPyodide(): Promise<PyodideInterface> {
     pathlib.Path(dirPath).mkdir()
     const moduleName = '_install_dependencies'
     pathlib.Path(`${dirPath}/${moduleName}.py`).write_text(installPythonCode)
-    pyodide.pyimport(moduleName)
+    const installDepsModule = pyodide.pyimport(moduleName)
 
-    loadedPyodide = pyodide
+    pyodideRunner = { pyodide, installDepsModule }
   }
-  return loadedPyodide
+  return pyodideRunner
 }
 
 function setupStreams(pyodide: PyodideInterface) {

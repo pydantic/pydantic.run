@@ -6,6 +6,7 @@ Some of this is taken from https://github.com/alexmojaki/pyodide-worker-runner/b
 from __future__ import annotations as _annotations
 import importlib
 import logging
+import os
 import re
 import sys
 import traceback
@@ -26,7 +27,6 @@ __all__ = ('install_deps',)
 sys.setrecursionlimit(400)
 # user a dict here to maintain order
 _all_dependencies: dict[str, None] = {}
-_logfire_configured = False
 
 
 class File(TypedDict):
@@ -55,6 +55,9 @@ async def install_deps(files: list[File]) -> Success | Error:
     for file in files:
         (cwd / file['name']).write_text(file['content'])
 
+    # For now, to get CORS headers right
+    os.environ['LOGFIRE_BASE_URL'] = 'https://logfire-logs-proxy.pydantic.workers.dev'
+
     dependencies: dict[str, None] = {}
     active: File | None = None
     highest = -1
@@ -81,8 +84,6 @@ async def install_deps(files: list[File]) -> Success | Error:
                 return Error(message=f'{logs}\n{traceback.format_exc()}')
 
         _all_dependencies.update(new_dependencies)
-        if 'logfire' in new_dependencies:
-            _prep_logfire()
 
     return Success(message=', '.join(_all_dependencies.keys()))
 
@@ -103,44 +104,6 @@ def _micropip_logging() -> Iterable[str]:
         yield file_name
     finally:
         logger.removeHandler(handler)
-
-
-def _prep_logfire():
-    global _logfire_configured
-    if _logfire_configured:
-        return
-
-    try:
-        import logfire
-    except ImportError:
-        return
-
-    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-    from opentelemetry.sdk.resources import Resource
-    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-
-    from logfire._internal.config import configure
-
-    # Prevent from creating a thread pool
-    Resource.create = Resource
-
-    def custom_logfire_configure(*, token: str | None = None, **kwargs):
-        configure(
-            # Avoid a BatchSpanProcessor which would try to start a thread
-            send_to_logfire=False,
-            additional_span_processors=[
-                SimpleSpanProcessor(
-                    OTLPSpanExporter(
-                        endpoint='https://logfire-logs-proxy.pydantic.workers.dev/v1/traces',
-                        headers={'Authorization': token or 'ZKbfrc38r3G6ZK6L61tWL6PVqmghwPgtvkC3FyThlkG4'},
-                    )
-                )
-            ],
-            inspect_arguments=False,
-        )
-
-    logfire.configure = custom_logfire_configure
-    _logfire_configured = True
 
 
 def _find_pep723_dependencies(script: str) -> dict[str, None] | None:
