@@ -16,7 +16,7 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
   const { files, warmup } = data
   let msg = ''
   try {
-    const [setupTime, { pyodide, installDepsModule }] = await time(getPyodide())
+    const [setupTime, { pyodide, installDeps }] = await time(getPyodideEnv())
     if (setupTime > 50) {
       msg += `Started Python in ${asMs(setupTime)}, `
     }
@@ -24,7 +24,7 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
     const sys = pyodide.pyimport('sys')
 
     const [installTime, installStatus]: [number, InstallSuccess | InstallError] = await time(
-      installDepsModule.install_deps(pyodide.toPy(files)),
+      installDeps.install_deps(pyodide.toPy(files)),
     )
     sys.stdout.flush()
     sys.stderr.flush()
@@ -84,18 +84,19 @@ function asMs(time: number) {
 async function time<T>(promise: Promise<T>): Promise<[number, T]> {
   const start = performance.now()
   const result = await promise
-  return [performance.now() - start, result]
+  const end = performance.now()
+  return [end - start, result]
 }
 
-interface PyodideRunner {
+interface PyodideEnv {
   pyodide: PyodideInterface
-  installDepsModule: any
+  installDeps: any
 }
 
-let pyodideRunner: PyodideRunner | null = null
+let pyodideEnv: PyodideEnv | null = null
 
-async function getPyodide(): Promise<PyodideRunner> {
-  if (!pyodideRunner) {
+async function getPyodideEnv(): Promise<PyodideEnv> {
+  if (!pyodideEnv) {
     const pyodide = await loadPyodide({
       indexURL: `https://cdn.jsdelivr.net/pyodide/v${pyodideVersion}/full/`,
     })
@@ -114,11 +115,11 @@ async function getPyodide(): Promise<PyodideRunner> {
     pathlib.Path(dirPath).mkdir()
     const moduleName = '_install_dependencies'
     pathlib.Path(`${dirPath}/${moduleName}.py`).write_text(installPythonCode)
-    const installDepsModule = pyodide.pyimport(moduleName)
+    const installDeps = pyodide.pyimport(moduleName)
 
-    pyodideRunner = { pyodide, installDepsModule }
+    pyodideEnv = { pyodide, installDeps }
   }
-  return pyodideRunner
+  return pyodideEnv
 }
 
 function setupStreams(pyodide: PyodideInterface) {

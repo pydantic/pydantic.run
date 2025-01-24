@@ -55,7 +55,8 @@ async def install_deps(files: list[File]) -> Success | Error:
     for file in files:
         (cwd / file['name']).write_text(file['content'])
 
-    # For now, to get CORS headers right
+    # For now, until all logfire endpoints set CORS headers
+    # waiting for https://github.com/pydantic/platform/pull/7353 and follow up for `/v1/info`
     os.environ['LOGFIRE_BASE_URL'] = 'https://logfire-logs-proxy.pydantic.workers.dev'
 
     dependencies: dict[str, None] = {}

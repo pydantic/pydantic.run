@@ -89,7 +89,9 @@ function escapeHTML(html: string): string {
   return escapeEl.innerHTML
 }
 
-// hellish regex to replace ansi links with html links since ansi-to-html doesn't support this
+// hellish regex to replace ansi links with html links since ansi-to-html doesn't know how
+// warning this make be very bittle! it's written to work for the logfire project URL currently printed
+// by the logfire SDK
 function replaceAnsiLinks(terminalOutput: string): string {
   return terminalOutput.replace(
     // eslint-disable-next-line no-control-regex
