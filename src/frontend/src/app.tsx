@@ -91,12 +91,9 @@ function escapeHTML(html: string): string {
 
 // hellish regex to replace ansi links with html links since ansi-to-html doesn't support this
 function replaceAnsiLinks(terminalOutput: string): string {
-  // eslint-disable-next-line no-control-regex
   return terminalOutput.replace(
+    // eslint-disable-next-line no-control-regex
     /\u001b]8;id=\d+;(.+?)\u001b\\\u001b\[4;\d+m(.+?)\u001b\[0m\u001b]8;;\u001b\\/g,
-    (m, url, text) => {
-      console.log({ m, url, text })
-      return `<a href="${url}" target="_blank">${text}</a>`
-    },
+    (_, url, text) => `<a href="${url}" target="_blank">${text}</a>`,
   )
 }
