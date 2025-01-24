@@ -39,9 +39,14 @@ export default function () {
       }
 
       if (newTerminalOutput) {
-        // console.log('escapeHTML(terminalOutput)', {escaedterminalOutput: escapeHTML(terminalOutput)})
-        // console.log('ansiConverter.toHtml(escapeHTML(terminalOutput))', ansiConverter.toHtml(escapeHTML(terminalOutput)))
-        setOutputHtml(ansiConverter.toHtml(escapeHTML(replaceAnsiLinks(terminalOutput))))
+        // get rid of HTML codes in the terminal output
+        terminalOutput = escapeHTML(terminalOutput)
+        // replace ansi links with html links since ansi-to-html doesn't support this
+        let terminalHtml = replaceAnsiLinks(terminalOutput)
+        // convert other ansi codes to html
+        terminalHtml = ansiConverter.toHtml(terminalHtml)
+        // set the output
+        setOutputHtml(terminalHtml)
         // scrolls to the bottom of the div
         outputRef.scrollTop = outputRef.scrollHeight
       }
@@ -84,7 +89,14 @@ function escapeHTML(html: string): string {
   return escapeEl.innerHTML
 }
 
+// hellish regex to replace ansi links with html links since ansi-to-html doesn't support this
 function replaceAnsiLinks(terminalOutput: string): string {
-  // '\u001b]8;id=651476;
-  return terminalOutput.replace(/\\u001b]8;id=\d+;/g, '\u001b]8;;')
+  // eslint-disable-next-line no-control-regex
+  return terminalOutput.replace(
+    /\u001b]8;id=\d+;(.+?)\u001b\\\u001b\[4;\d+m(.+?)\u001b\[0m\u001b]8;;\u001b\\/g,
+    (m, url, text) => {
+      console.log({ m, url, text })
+      return `<a href="${url}" target="_blank">${text}</a>`
+    },
+  )
 }
