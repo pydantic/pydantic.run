@@ -16,17 +16,18 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
   const { files, warmup } = data
   let msg = ''
   try {
-    const [setupTime, pyodide] = await time(getPyodide())
+    const [setupTime, { pyodide, installDeps }] = await time(getPyodideEnv())
     if (setupTime > 50) {
       msg += `Started Python in ${asMs(setupTime)}, `
     }
     post({ kind: 'status', message: `${msg}Installing dependencies…` })
+    const sys = pyodide.pyimport('sys')
 
     const [installTime, installStatus]: [number, InstallSuccess | InstallError] = await time(
-      pyodide.runPython('import _install_dependencies; _install_dependencies.install_deps(files)', {
-        globals: pyodide.toPy({ files: files }),
-      }),
+      installDeps.install_deps(pyodide.toPy(files)),
     )
+    sys.stdout.flush()
+    sys.stderr.flush()
     if (installStatus.kind == 'error') {
       post({ kind: 'status', message: `${msg}Error occurred` })
       post({ kind: 'error', message: installStatus.message })
@@ -50,6 +51,8 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
         filename: activeFile.name,
       }),
     )
+    sys.stdout.flush()
+    sys.stderr.flush()
     postPrint()
     post({ kind: 'status', message: `${msg}ran code in ${asMs(execTime)}` })
   } catch (err) {
@@ -81,13 +84,19 @@ function asMs(time: number) {
 async function time<T>(promise: Promise<T>): Promise<[number, T]> {
   const start = performance.now()
   const result = await promise
-  return [performance.now() - start, result]
+  const end = performance.now()
+  return [end - start, result]
 }
 
-let loadedPyodide: PyodideInterface | null = null
+interface PyodideEnv {
+  pyodide: PyodideInterface
+  installDeps: any
+}
 
-async function getPyodide(): Promise<PyodideInterface> {
-  if (!loadedPyodide) {
+let pyodideEnv: PyodideEnv | null = null
+
+async function getPyodideEnv(): Promise<PyodideEnv> {
+  if (!pyodideEnv) {
     const pyodide = await loadPyodide({
       indexURL: `https://cdn.jsdelivr.net/pyodide/v${pyodideVersion}/full/`,
     })
@@ -106,11 +115,11 @@ async function getPyodide(): Promise<PyodideInterface> {
     pathlib.Path(dirPath).mkdir()
     const moduleName = '_install_dependencies'
     pathlib.Path(`${dirPath}/${moduleName}.py`).write_text(installPythonCode)
-    pyodide.pyimport(moduleName)
+    const installDeps = pyodide.pyimport(moduleName)
 
-    loadedPyodide = pyodide
+    pyodideEnv = { pyodide, installDeps }
   }
-  return loadedPyodide
+  return pyodideEnv
 }
 
 function setupStreams(pyodide: PyodideInterface) {

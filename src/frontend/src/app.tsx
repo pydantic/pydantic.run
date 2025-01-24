@@ -39,7 +39,14 @@ export default function () {
       }
 
       if (newTerminalOutput) {
-        setOutputHtml(ansiConverter.toHtml(escapeHTML(terminalOutput)))
+        // get rid of HTML codes in the terminal output
+        terminalOutput = escapeHTML(terminalOutput)
+        // replace ansi links with html links since ansi-to-html doesn't support this
+        let terminalHtml = replaceAnsiLinks(terminalOutput)
+        // convert other ansi codes to html
+        terminalHtml = ansiConverter.toHtml(terminalHtml)
+        // set the output
+        setOutputHtml(terminalHtml)
         // scrolls to the bottom of the div
         outputRef.scrollTop = outputRef.scrollHeight
       }
@@ -80,4 +87,15 @@ const escapeEl = document.createElement('textarea')
 function escapeHTML(html: string): string {
   escapeEl.textContent = html
   return escapeEl.innerHTML
+}
+
+// hellish regex to replace ansi links with html links since ansi-to-html doesn't know how
+// warning this make be very bittle! it's written to work for the logfire project URL currently printed
+// by the logfire SDK
+function replaceAnsiLinks(terminalOutput: string): string {
+  return terminalOutput.replace(
+    // eslint-disable-next-line no-control-regex
+    /\u001b]8;id=\d+;(.+?)\u001b\\\u001b\[4;\d+m(.+?)\u001b\[0m\u001b]8;;\u001b\\/g,
+    (_, url, text) => `<a href="${url}" target="_blank">${text}</a>`,
+  )
 }
