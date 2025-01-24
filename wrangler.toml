@@ -1,13 +1,13 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "pydantic-run"
 compatibility_date = "2025-01-09"
-main = "src/worker/src/index.ts"
+main = "src/cf_worker/src/index.ts"
 routes = ["pydantic.run/*"]
 workers_dev = false
 
 [build]
 command = "npm run build"
-watch_dir = ["src/frontend/src", "src/worker/src"]
+watch_dir = ["src/frontend/src", "src/cf_worker/src"]
 
 [[r2_buckets]]
 bucket_name = "pydantic-run"
