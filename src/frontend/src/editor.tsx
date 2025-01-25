@@ -12,6 +12,8 @@ interface EditorProps {
 export default function ({ runCode }: EditorProps) {
   const [saveActive, setSaveActive] = createSignal(false)
   const [saveStatus, setSaveStatus] = createSignal('Changes not saved')
+  const [showSave, setShowSave] = createSignal(false)
+  const [showFork, setShowFork] = createSignal(location.pathname.startsWith('/store/'))
   const [files, setFiles] = createSignal<File[]>([])
   const [fadeOut, setFadeOut] = createSignal(false)
   let editor: monaco.editor.IStandaloneCodeEditor | null = null
@@ -20,7 +22,7 @@ export default function ({ runCode }: EditorProps) {
   let clearSaveTimeout: number
 
   onMount(async () => {
-    const [{ monaco }, initialFiles] = await Promise.all([import('./monacoEditor'), retrieve()])
+    const [{ monaco }, { files, allowSave, allowFork }] = await Promise.all([import('./monacoEditor'), retrieve()])
     monaco.editor.defineTheme('custom-dark', {
       base: 'vs-dark',
       inherit: true,
@@ -30,8 +32,8 @@ export default function ({ runCode }: EditorProps) {
       },
     })
 
-    const active = findActive(initialFiles)
-    const file = initialFiles.find((f) => f.activeIndex === active)
+    const active = findActive(files)
+    const file = files.find((f) => f.activeIndex === active)
     editor = monaco.editor.create(editorEl, {
       value: file ? file.content : '',
       language: 'python',
@@ -42,8 +44,10 @@ export default function ({ runCode }: EditorProps) {
       },
     })
 
-    setFiles(initialFiles)
-    runCode(initialFiles, true)
+    setFiles(files)
+    setShowSave(allowSave)
+    setShowFork(allowFork)
+    runCode(files, true)
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, run)
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => save(updateFiles(getActiveContent()), true))
@@ -53,19 +57,21 @@ export default function ({ runCode }: EditorProps) {
     })
   })
 
-  async function save(files: File[], verbose: boolean = false) {
+  async function save(files: File[], verbose: boolean = false, fork: boolean = false) {
     if (!saveActive()) {
       return
     }
     let msg: string | null = null
     try {
-      msg = await store(files)
+      msg = await store(files, fork)
     } catch (err) {
       setFadeOut(false)
       clearInterval(statusTimeout)
       setSaveStatus(`Failed to save, ${err}`)
       return
     }
+    setShowSave(true)
+    setShowFork(true)
     if (verbose && msg === null) {
       msg = 'Up to date'
     } else if (msg === null) {
@@ -108,6 +114,11 @@ export default function ({ runCode }: EditorProps) {
       // noinspection JSIgnoredPromiseFromCall
       save(updateFiles(getActiveContent()), true)
     }
+  }
+
+  function fork() {
+    // noinspection JSIgnoredPromiseFromCall
+    save(updateFiles(getActiveContent()), true, true)
   }
 
   function addFile(name: string) {
@@ -161,15 +172,28 @@ export default function ({ runCode }: EditorProps) {
             <span class={fadeOut() ? 'middle status fade fadeout' : 'middle status fade'}>{saveStatus()}</span>
           </div>
           <div class="flex">
-            <div class="toggle">
-              <span class="middle">Save</span>
-              <label class="switch">
-                <input type="checkbox" checked={saveActive()} onChange={(e) => toggleSave(e.currentTarget.checked)} />
-                <span class="slider"></span>
-              </label>
-            </div>
+            {showSave() && (
+              <div class="toggle">
+                <span class="middle">Save</span>
+                <label class="switch">
+                  <input
+                    type="checkbox"
+                    checked={saveActive()}
+                    onChange={(e) => toggleSave(e.currentTarget.checked)}
+                  />
+                  <span class="slider"></span>
+                </label>
+              </div>
+            )}
+            {showFork() && (
+              <div>
+                <button class="blue" onClick={fork} title="Save these files under a new URL">
+                  Fork
+                </button>
+              </div>
+            )}
             <div>
-              <button class="run" onClick={run}>
+              <button class="green" onClick={run}>
                 Run
               </button>
             </div>

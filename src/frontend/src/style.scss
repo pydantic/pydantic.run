@@ -3,6 +3,7 @@
 $background: #1e1f2e;
 $border: #34364f;
 $btn-green: #28a745;
+$btn-blue: #007bff;
 $tab-border: #705326;
 $mobile-limit: 800px;
 
@@ -77,7 +78,7 @@ a {
 footer {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0 0;
+  padding: 8px 3px 0;
 }
 .flex {
   display: flex;
@@ -103,11 +104,17 @@ button {
   border-radius: 5px;
   cursor: pointer;
   margin-left: 10px;
-  &.run {
+  &.green {
     background: $btn-green;
   }
-  &.run:hover {
+  &.green:hover {
     background: color.adjust($btn-green, $lightness: -10%);
+  }
+  &.blue {
+    background: $btn-blue;
+  }
+  &.blue:hover {
+    background: color.adjust($btn-blue, $lightness: -10%);
   }
 }
 
