@@ -13,7 +13,7 @@ export default function ({ runCode }: EditorProps) {
   const [saveActive, setSaveActive] = createSignal(false)
   const [saveStatus, setSaveStatus] = createSignal('Changes not saved')
   const [showSave, setShowSave] = createSignal(false)
-  const [showFork, setShowFork] = createSignal(location.pathname.startsWith('/store/'))
+  const [showFork, setShowFork] = createSignal(false)
   const [files, setFiles] = createSignal<File[]>([])
   const [fadeOut, setFadeOut] = createSignal(false)
   let editor: monaco.editor.IStandaloneCodeEditor | null = null
