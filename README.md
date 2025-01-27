@@ -1,4 +1,4 @@
-# [pydantic.run](https://pydantic.dev)
+# [pydantic.run](https://pydantic.run)
 
 Python browser sandbox. Write and share Python code, run it in the browser.
 
