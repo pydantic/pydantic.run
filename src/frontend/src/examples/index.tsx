@@ -38,7 +38,7 @@ const HELLO_WORLD_FILES: CodeFile[] = [
 
 const EXAMPLES: Example[] = [
   {
-    path: '/blank',
+    path: '/example/blank',
     name: 'Blank',
     files: [
       {
@@ -49,13 +49,13 @@ const EXAMPLES: Example[] = [
     ],
   },
   {
-    path: '/hello-world',
+    path: '/example/hello-world',
     name: 'Hello world',
     files: HELLO_WORLD_FILES,
   },
   {
-    path: '/logfire',
-    name: 'Logfire',
+    path: '/example/logfire',
+    name: 'Pydantic Logfire',
     files: [
       {
         name: 'main.py',
@@ -65,7 +65,7 @@ const EXAMPLES: Example[] = [
     ],
   },
   {
-    path: '/pydantic',
+    path: '/example/pydantic',
     name: 'Pydantic',
     files: [
       {
