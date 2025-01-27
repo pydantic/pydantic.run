@@ -53,7 +53,7 @@ export default function ({ runCode }: EditorProps) {
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => save(updateFiles(getActiveContent()), true))
     editor.onDidChangeModelContent(() => {
       clearTimeout(clearSaveTimeout)
-      clearSaveTimeout = setTimeout(() => save(updateFiles(getActiveContent())), 1000)
+      clearSaveTimeout = setTimeout(() => save(updateFiles(getActiveContent())), 1200)
     })
   })
 
@@ -80,7 +80,7 @@ export default function ({ runCode }: EditorProps) {
     setFadeOut(false)
     setSaveStatus(msg)
     clearInterval(statusTimeout)
-    statusTimeout = setTimeout(() => setFadeOut(true), 2000)
+    statusTimeout = setTimeout(() => setFadeOut(true), 4000)
   }
 
   function updateFiles(activeContent: string): File[] {
@@ -92,10 +92,10 @@ export default function ({ runCode }: EditorProps) {
     })
   }
 
-  async function run() {
+  function run() {
     const files = updateFiles(getActiveContent())
     runCode(files)
-    await save(files)
+    save(files)
   }
 
   function getActiveContent(): string {
@@ -111,13 +111,12 @@ export default function ({ runCode }: EditorProps) {
   function toggleSave(enabled: boolean) {
     setSaveActive(enabled)
     if (enabled) {
-      // noinspection JSIgnoredPromiseFromCall
       save(updateFiles(getActiveContent()), true)
     }
   }
 
   function fork() {
-    // noinspection JSIgnoredPromiseFromCall
+    setSaveActive(true)
     save(updateFiles(getActiveContent()), true, true)
   }
 
