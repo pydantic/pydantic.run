@@ -2,19 +2,24 @@ import type { File } from './types'
 
 import defaultPythonCode from './default_code.py?raw'
 
-interface StoreResponse {
+interface StoreHttpResponse {
   readKey: string
   writeKey: string
 }
 
-export async function store(files: File[] | null): Promise<string | null> {
+interface StoreResult {
+  message: string
+  newProject: boolean
+}
+
+export async function store(files: File[] | null, fork: boolean = false): Promise<StoreResult | null> {
   const readKey = getReadKey(location.pathname)
   const body = JSON.stringify({ files })
   let url = '/api/store/new'
   let writeKey: string | null = null
   if (readKey) {
     writeKey = localStorage.getItem(getWriteKey(readKey))
-    if (writeKey) {
+    if (writeKey && !fork) {
       url = `/api/store/${readKey}?writeKey=${writeKey}`
       const lastSave = localStorage.getItem(getContentKey(readKey))
       if (lastSave && lastSave == body) {
@@ -37,33 +42,50 @@ export async function store(files: File[] | null): Promise<string | null> {
     console.warn({ status: r.status, response_text })
     throw new Error(`${r.status}: Failed to store files.`)
   }
-  if (readKey && writeKey) {
+  if (readKey && writeKey && !fork) {
     localStorage.setItem(getContentKey(readKey), body)
-    return 'Changes saved'
+    return { message: 'Changes saved', newProject: false }
   } else {
-    const data: StoreResponse = await r.json()
+    const data: StoreHttpResponse = await r.json()
     localStorage.setItem(getContentKey(data.readKey), body)
     const path = `/store/${data.readKey}`
     localStorage.setItem(getWriteKey(data.readKey), data.writeKey)
     history.pushState({}, '', path)
-    return 'New project created'
+    return { message: 'New project created', newProject: true }
   }
 }
 
 const getWriteKey = (readKey: string) => `getWriteKey:${readKey}`
 
-export async function retrieve(): Promise<File[]> {
-  if (location.pathname.startsWith('/store/')) {
-    const f = await retrieveStored(location.pathname)
-    if (f) {
-      return f
-    }
-  }
-  return [{ name: 'main.py', content: defaultPythonCode, activeIndex: 0 }]
+interface InitialState {
+  files: File[]
+  allowSave: boolean
+  allowFork: boolean
 }
 
-async function retrieveStored(path: string): Promise<File[] | null> {
-  const readKey = getReadKey(path)
+export async function retrieve(): Promise<InitialState> {
+  if (location.pathname.startsWith('/store/')) {
+    const readKey = getReadKey(location.pathname)
+    if (readKey) {
+      const files = await retrieveStored(readKey)
+      if (files) {
+        const writeKey = localStorage.getItem(getWriteKey(readKey))
+        return {
+          files,
+          allowSave: !!writeKey,
+          allowFork: true,
+        }
+      }
+    }
+  }
+  return {
+    files: [{ name: 'main.py', content: defaultPythonCode, activeIndex: 0 }],
+    allowSave: true,
+    allowFork: false,
+  }
+}
+
+async function retrieveStored(readKey: string): Promise<File[] | null> {
   const r = await fetch(`/api/store/${readKey}`)
   if (r.status == 404) {
     return null

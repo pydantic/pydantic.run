@@ -12,15 +12,19 @@ interface EditorProps {
 export default function ({ runCode }: EditorProps) {
   const [saveActive, setSaveActive] = createSignal(false)
   const [saveStatus, setSaveStatus] = createSignal('Changes not saved')
+  const [showSave, setShowSave] = createSignal(false)
+  const [showFork, setShowFork] = createSignal(false)
+  const [disableFork, setDisableFork] = createSignal(false)
   const [files, setFiles] = createSignal<File[]>([])
   const [fadeOut, setFadeOut] = createSignal(false)
   let editor: monaco.editor.IStandaloneCodeEditor | null = null
   const editorEl = (<div class="editor" />) as HTMLElement
   let statusTimeout: number
   let clearSaveTimeout: number
+  let clearForkTimeout: number
 
   onMount(async () => {
-    const [{ monaco }, initialFiles] = await Promise.all([import('./monacoEditor'), retrieve()])
+    const [{ monaco }, { files, allowSave, allowFork }] = await Promise.all([import('./monacoEditor'), retrieve()])
     monaco.editor.defineTheme('custom-dark', {
       base: 'vs-dark',
       inherit: true,
@@ -30,8 +34,8 @@ export default function ({ runCode }: EditorProps) {
       },
     })
 
-    const active = findActive(initialFiles)
-    const file = initialFiles.find((f) => f.activeIndex === active)
+    const active = findActive(files)
+    const file = files.find((f) => f.activeIndex === active)
     editor = monaco.editor.create(editorEl, {
       value: file ? file.content : '',
       language: 'python',
@@ -42,39 +46,48 @@ export default function ({ runCode }: EditorProps) {
       },
     })
 
-    setFiles(initialFiles)
-    runCode(initialFiles, true)
+    setFiles(files)
+    setShowSave(allowSave)
+    setShowFork(allowFork)
+    runCode(files, true)
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, run)
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => save(updateFiles(getActiveContent()), true))
     editor.onDidChangeModelContent(() => {
       clearTimeout(clearSaveTimeout)
-      clearSaveTimeout = setTimeout(() => save(updateFiles(getActiveContent())), 1000)
+      clearSaveTimeout = setTimeout(() => save(updateFiles(getActiveContent())), 1200)
     })
   })
 
-  async function save(files: File[], verbose: boolean = false) {
+  async function save(files: File[], verbose: boolean = false, fork: boolean = false) {
     if (!saveActive()) {
       return
     }
-    let msg: string | null = null
+    let result = null
     try {
-      msg = await store(files)
+      result = await store(files, fork)
     } catch (err) {
       setFadeOut(false)
       clearInterval(statusTimeout)
       setSaveStatus(`Failed to save, ${err}`)
       return
     }
-    if (verbose && msg === null) {
-      msg = 'Up to date'
-    } else if (msg === null) {
+    setShowSave(true)
+    setShowFork(true)
+    if (verbose && result === null) {
+      result = { message: 'Up to date', newProject: false }
+    } else if (result === null) {
       return
     }
     setFadeOut(false)
-    setSaveStatus(msg)
+    setSaveStatus(result.message)
     clearInterval(statusTimeout)
-    statusTimeout = setTimeout(() => setFadeOut(true), 2000)
+    statusTimeout = setTimeout(() => setFadeOut(true), 4000)
+    if (result.newProject) {
+      setDisableFork(true)
+      clearTimeout(clearForkTimeout)
+      clearForkTimeout = setTimeout(() => setDisableFork(false), 10000)
+    }
   }
 
   function updateFiles(activeContent: string): File[] {
@@ -86,10 +99,10 @@ export default function ({ runCode }: EditorProps) {
     })
   }
 
-  async function run() {
+  function run() {
     const files = updateFiles(getActiveContent())
     runCode(files)
-    await save(files)
+    save(files)
   }
 
   function getActiveContent(): string {
@@ -105,9 +118,13 @@ export default function ({ runCode }: EditorProps) {
   function toggleSave(enabled: boolean) {
     setSaveActive(enabled)
     if (enabled) {
-      // noinspection JSIgnoredPromiseFromCall
       save(updateFiles(getActiveContent()), true)
     }
+  }
+
+  function fork() {
+    setSaveActive(true)
+    save(updateFiles(getActiveContent()), true, true)
   }
 
   function addFile(name: string) {
@@ -161,15 +178,33 @@ export default function ({ runCode }: EditorProps) {
             <span class={fadeOut() ? 'middle status fade fadeout' : 'middle status fade'}>{saveStatus()}</span>
           </div>
           <div class="flex">
-            <div class="toggle">
-              <span class="middle">Save</span>
-              <label class="switch">
-                <input type="checkbox" checked={saveActive()} onChange={(e) => toggleSave(e.currentTarget.checked)} />
-                <span class="slider"></span>
-              </label>
-            </div>
+            {showSave() && (
+              <div class="toggle" title="Save changes to on pydantic.run's infra">
+                <span class="middle">Save</span>
+                <label class="switch">
+                  <input
+                    type="checkbox"
+                    checked={saveActive()}
+                    onChange={(e) => toggleSave(e.currentTarget.checked)}
+                  />
+                  <span class="slider"></span>
+                </label>
+              </div>
+            )}
+            {showFork() && (
+              <div>
+                <button
+                  class="blue"
+                  disabled={disableFork()}
+                  onClick={fork}
+                  title={disableFork() ? 'Forking temporarily disabled' : 'Save these files under a new URL'}
+                >
+                  Fork
+                </button>
+              </div>
+            )}
             <div>
-              <button class="run" onClick={run}>
+              <button class="green" onClick={run} title="Run code in your browser and display the output">
                 Run
               </button>
             </div>
