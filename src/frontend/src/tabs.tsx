@@ -1,7 +1,7 @@
-import type { File } from './types'
+import type { CodeFile } from './types'
 
 interface TabProps {
-  files: File[]
+  files: CodeFile[]
   addFile: (name: string) => void
   changeFile: (name: string) => void
   closeFile: (name: string) => void
@@ -42,12 +42,12 @@ interface Tab {
   active: boolean
 }
 
-function tabs(files: File[]): Tab[] {
+function tabs(files: CodeFile[]): Tab[] {
   const active = findActive(files)
   return files.map(({ name, activeIndex }) => ({ name, active: activeIndex === active }))
 }
 
-function getNewName(files: File[]): string | null {
+function getNewName(files: CodeFile[]): string | null {
   let defaultName: string = 'new.py'
   let num = 1
   while (files.find((f) => f.name === defaultName)) {
@@ -62,5 +62,5 @@ function getNewName(files: File[]): string | null {
   return name
 }
 
-export const findActive = (files: File[]): number =>
+export const findActive = (files: CodeFile[]): number =>
   files.reduce((acc, { activeIndex }) => Math.max(acc, activeIndex), 0)

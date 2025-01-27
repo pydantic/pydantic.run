@@ -8,7 +8,7 @@ export default {
       return await api(url, request, env)
     } else if (url.pathname === '/new' || url.pathname === '/new/') {
       return await createNew(url, request, env)
-    } else if (url.pathname.startsWith('/store/')) {
+    } else if (url.pathname.startsWith('/store/') || url.pathname.startsWith('/example/')) {
       url.pathname = '/'
       return await env.ASSETS.fetch(url, request)
     } else if (url.pathname.startsWith('/info')) {
