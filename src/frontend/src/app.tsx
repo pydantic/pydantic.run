@@ -3,7 +3,8 @@ import { createSignal, onMount } from 'solid-js'
 import Convert from 'ansi-to-html'
 import Editor from './editor'
 import Worker from './worker?worker'
-import type { WorkerResponse, RunCode, File } from './types'
+import type { WorkerResponse, RunCode, CodeFile } from './types'
+import { Examples } from './examples'
 
 const decoder = new TextDecoder()
 const ansiConverter = new Convert()
@@ -53,7 +54,7 @@ export default function () {
     }
   })
 
-  async function runCode(files: File[], warmup: boolean = false) {
+  async function runCode(files: CodeFile[], warmup: boolean = false) {
     setStatus('Launching Python...')
     setInstalled('')
     setOutputHtml('')
@@ -67,8 +68,14 @@ export default function () {
     <main>
       <header>
         <h1>pydantic.run</h1>
-        <aside>Python browser sandbox.</aside>
-        <div id="counter"></div>
+        <aside>
+          Python browser sandbox,{' '}
+          <a href="https://github.com/pydantic/pydantic.run" target="_blank">
+            learn more
+          </a>
+          .
+        </aside>
+        <Examples />
       </header>
       <section>
         <Editor runCode={runCode} />

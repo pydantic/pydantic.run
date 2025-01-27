@@ -1,12 +1,12 @@
 import { onMount, createSignal, Show } from 'solid-js'
 
-import type * as monaco from 'monaco-editor'
-import type { File } from './types'
+import type { CodeFile } from './types'
 import { retrieve, store } from './store.ts'
 import { Tabs, findActive } from './tabs'
+import type { Editor } from './monacoEditor'
 
 interface EditorProps {
-  runCode: (files: File[], warmup?: boolean) => void
+  runCode: (files: CodeFile[], warmup?: boolean) => void
 }
 
 export default function ({ runCode }: EditorProps) {
@@ -15,51 +15,35 @@ export default function ({ runCode }: EditorProps) {
   const [showSave, setShowSave] = createSignal(false)
   const [showFork, setShowFork] = createSignal(false)
   const [disableFork, setDisableFork] = createSignal(false)
-  const [files, setFiles] = createSignal<File[]>([])
+  const [files, setFiles] = createSignal<CodeFile[]>([])
   const [fadeOut, setFadeOut] = createSignal(false)
-  let editor: monaco.editor.IStandaloneCodeEditor | null = null
+  let editor: Editor | null = null
   const editorEl = (<div class="editor" />) as HTMLElement
   let statusTimeout: number
   let clearSaveTimeout: number
   let clearForkTimeout: number
 
   onMount(async () => {
-    const [{ monaco }, { files, allowSave, allowFork }] = await Promise.all([import('./monacoEditor'), retrieve()])
-    monaco.editor.defineTheme('custom-dark', {
-      base: 'vs-dark',
-      inherit: true,
-      rules: [],
-      colors: {
-        'editor.background': '#1e1f2e',
-      },
-    })
+    const [{ Editor, KeyMod, KeyCode }, { files, allowSave, allowFork }] = await Promise.all([import('./monacoEditor'), retrieve()])
 
     const active = findActive(files)
     const file = files.find((f) => f.activeIndex === active)
-    editor = monaco.editor.create(editorEl, {
-      value: file ? file.content : '',
-      language: 'python',
-      theme: 'custom-dark',
-      automaticLayout: true,
-      minimap: {
-        enabled: false,
-      },
-    })
+    editor = new Editor(editorEl, file)
 
     setFiles(files)
     setShowSave(allowSave)
     setShowFork(allowFork)
     runCode(files, true)
 
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, run)
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => save(updateFiles(getActiveContent()), true))
+    editor.addCommand(KeyMod.CtrlCmd | KeyCode.Enter, run)
+    editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyS, () => save(updateFiles(editor!.getValue()), true))
     editor.onDidChangeModelContent(() => {
       clearTimeout(clearSaveTimeout)
-      clearSaveTimeout = setTimeout(() => save(updateFiles(getActiveContent())), 1200)
+      clearSaveTimeout = setTimeout(() => save(updateFiles(editor!.getValue())), 1200)
     })
   })
 
-  async function save(files: File[], verbose: boolean = false, fork: boolean = false) {
+  async function save(files: CodeFile[], verbose: boolean = false, fork: boolean = false) {
     if (!saveActive()) {
       return
     }
@@ -90,7 +74,7 @@ export default function ({ runCode }: EditorProps) {
     }
   }
 
-  function updateFiles(activeContent: string): File[] {
+  function updateFiles(activeContent: string): CodeFile[] {
     return setFiles((prev) => {
       const active = findActive(prev)
       return prev.map(({ name, content, activeIndex }) => {
@@ -100,49 +84,40 @@ export default function ({ runCode }: EditorProps) {
   }
 
   function run() {
-    const files = updateFiles(getActiveContent())
+    const files = updateFiles(editor!.getValue())
     runCode(files)
     save(files)
-  }
-
-  function getActiveContent(): string {
-    return editor!.getValue()
-  }
-
-  function setActiveContent(content: string) {
-    if (editor) {
-      editor.setValue(content)
-    }
   }
 
   function toggleSave(enabled: boolean) {
     setSaveActive(enabled)
     if (enabled) {
-      save(updateFiles(getActiveContent()), true)
+      save(updateFiles(editor!.getValue()), true)
     }
   }
 
   function fork() {
     setSaveActive(true)
-    save(updateFiles(getActiveContent()), true, true)
+    save(updateFiles(editor!.getValue()), true, true)
   }
 
   function addFile(name: string) {
     // set active to 0, for new file, it'll be set by changeTab
-    const file: File = { name, content: '', activeIndex: 0 }
+    const file: CodeFile = { name, content: '', activeIndex: 0 }
     setFiles((prev) => [...prev, file])
     changeFile(name)
     editor!.focus()
   }
 
   function changeFile(newName: string) {
-    const activeContent = getActiveContent()
+    const activeContent = editor!.getValue()
     const files = setFiles((prev) => {
       const active = findActive(prev)
       return prev.map(({ name, content, activeIndex }) => {
         if (name == newName) {
-          setActiveContent(content)
-          return { name, content, activeIndex: active + 1 }
+          const newFile = { name, content, activeIndex: active + 1 }
+          editor!.setFile(newFile)
+          return newFile
         } else if (activeIndex === active) {
           return { name, content: activeContent, activeIndex }
         } else {

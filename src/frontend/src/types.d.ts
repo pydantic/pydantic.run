@@ -1,4 +1,4 @@
-export interface File {
+export interface CodeFile {
   name: string
   content: string
   // highest activeIndex value is the active tab
@@ -6,7 +6,7 @@ export interface File {
 }
 
 export interface RunCode {
-  files: File[]
+  files: CodeFile[]
   warmup?: boolean
 }
 

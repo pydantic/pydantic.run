@@ -1,7 +1,7 @@
 /* eslint @typescript-eslint/no-explicit-any: off */
 import { loadPyodide, PyodideInterface, version as pyodideVersion } from 'pyodide'
 import installPythonCode from './install_dependencies.py?raw'
-import type { File, RunCode, WorkerResponse } from './types'
+import type { CodeFile, RunCode, WorkerResponse } from './types'
 
 interface InstallSuccess {
   kind: 'success'
@@ -185,5 +185,5 @@ function post(response: WorkerResponse) {
   self.postMessage(response)
 }
 
-export const findActive = (files: File[]): number =>
+export const findActive = (files: CodeFile[]): number =>
   files.reduce((acc, { activeIndex }) => Math.max(acc, activeIndex), 0)

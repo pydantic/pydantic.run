@@ -1,6 +1,5 @@
-import type { File } from './types'
-
-import defaultPythonCode from './default_code.py?raw'
+import type { CodeFile } from './types'
+import { getExample } from './examples'
 
 interface StoreHttpResponse {
   readKey: string
@@ -12,7 +11,7 @@ interface StoreResult {
   newProject: boolean
 }
 
-export async function store(files: File[] | null, fork: boolean = false): Promise<StoreResult | null> {
+export async function store(files: CodeFile[] | null, fork: boolean = false): Promise<StoreResult | null> {
   const readKey = getReadKey(location.pathname)
   const body = JSON.stringify({ files })
   let url = '/api/store/new'
@@ -58,14 +57,15 @@ export async function store(files: File[] | null, fork: boolean = false): Promis
 const getWriteKey = (readKey: string) => `getWriteKey:${readKey}`
 
 interface InitialState {
-  files: File[]
+  files: CodeFile[]
   allowSave: boolean
   allowFork: boolean
 }
 
 export async function retrieve(): Promise<InitialState> {
-  if (location.pathname.startsWith('/store/')) {
-    const readKey = getReadKey(location.pathname)
+  const {pathname} = location
+  if (pathname.startsWith('/store/')) {
+    const readKey = getReadKey(pathname)
     if (readKey) {
       const files = await retrieveStored(readKey)
       if (files) {
@@ -79,13 +79,13 @@ export async function retrieve(): Promise<InitialState> {
     }
   }
   return {
-    files: [{ name: 'main.py', content: defaultPythonCode, activeIndex: 0 }],
+    files: getExample(pathname),
     allowSave: true,
     allowFork: false,
   }
 }
 
-async function retrieveStored(readKey: string): Promise<File[] | null> {
+async function retrieveStored(readKey: string): Promise<CodeFile[] | null> {
   const r = await fetch(`/api/store/${readKey}`)
   if (r.status == 404) {
     return null
@@ -96,7 +96,7 @@ async function retrieveStored(readKey: string): Promise<File[] | null> {
     throw new Error(`${r.status}: Failed to retrieve stored files.`)
   }
   const { files } = await r.json()
-  return files as File[]
+  return files as CodeFile[]
 }
 
 const getReadKey = (path: string): string | null => path.split('/')[2] || null

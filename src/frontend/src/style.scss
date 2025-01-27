@@ -69,6 +69,21 @@ a {
   text-decoration: none;
 }
 
+.examples {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  margin: 5px 0;
+  a {
+    border-radius: 50px;
+    display: block;
+    background: $btn-green;
+    color: white !important;
+    padding: 5px 15px;
+    margin: 5px;
+  }
+}
+
 .editor {
   width: 100%;
   flex: 1;
