@@ -40,10 +40,10 @@ export default function () {
       }
 
       if (newTerminalOutput) {
-        // get rid of HTML codes in the terminal output
-        terminalOutput = escapeHTML(terminalOutput)
-        // replace ansi links with html links since ansi-to-html doesn't support this
-        let terminalHtml = replaceAnsiLinks(terminalOutput)
+        // escape HTML codes in the terminal output
+        const escapedOutput = escapeHTML(terminalOutput)
+        // replace ansi links with html links since ansi-to-html doesn't support this properly
+        let terminalHtml = replaceAnsiLinks(escapedOutput)
         // convert other ansi codes to html
         terminalHtml = ansiConverter.toHtml(terminalHtml)
         // set the output
@@ -97,7 +97,7 @@ function escapeHTML(html: string): string {
 }
 
 // hellish regex to replace ansi links with html links since ansi-to-html doesn't know how
-// warning this make be very bittle! it's written to work for the logfire project URL currently printed
+// warning this may be very bittle! it's written to work for the logfire project URL currently printed
 // by the logfire SDK
 function replaceAnsiLinks(terminalOutput: string): string {
   return terminalOutput.replace(
