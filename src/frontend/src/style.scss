@@ -106,15 +106,20 @@ button {
   margin-left: 10px;
   &.green {
     background: $btn-green;
-  }
-  &.green:hover {
-    background: color.adjust($btn-green, $lightness: -10%);
+    &:hover {
+      background: color.adjust($btn-green, $lightness: -10%);
+    }
   }
   &.blue {
     background: $btn-blue;
-  }
-  &.blue:hover {
-    background: color.adjust($btn-blue, $lightness: -10%);
+    &:hover {
+      background: color.adjust($btn-blue, $lightness: -10%);
+    }
+    &:disabled {
+      background: color.adjust($btn-blue, $lightness: 20%);
+      opacity: 0.6;
+      cursor: default;
+    }
   }
 }
 

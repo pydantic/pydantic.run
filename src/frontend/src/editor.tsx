@@ -14,12 +14,14 @@ export default function ({ runCode }: EditorProps) {
   const [saveStatus, setSaveStatus] = createSignal('Changes not saved')
   const [showSave, setShowSave] = createSignal(false)
   const [showFork, setShowFork] = createSignal(false)
+  const [disableFork, setDisableFork] = createSignal(false)
   const [files, setFiles] = createSignal<File[]>([])
   const [fadeOut, setFadeOut] = createSignal(false)
   let editor: monaco.editor.IStandaloneCodeEditor | null = null
   const editorEl = (<div class="editor" />) as HTMLElement
   let statusTimeout: number
   let clearSaveTimeout: number
+  let clearForkTimeout: number
 
   onMount(async () => {
     const [{ monaco }, { files, allowSave, allowFork }] = await Promise.all([import('./monacoEditor'), retrieve()])
@@ -61,9 +63,9 @@ export default function ({ runCode }: EditorProps) {
     if (!saveActive()) {
       return
     }
-    let msg: string | null = null
+    let result = null
     try {
-      msg = await store(files, fork)
+      result = await store(files, fork)
     } catch (err) {
       setFadeOut(false)
       clearInterval(statusTimeout)
@@ -72,15 +74,20 @@ export default function ({ runCode }: EditorProps) {
     }
     setShowSave(true)
     setShowFork(true)
-    if (verbose && msg === null) {
-      msg = 'Up to date'
-    } else if (msg === null) {
+    if (verbose && result === null) {
+      result = { message: 'Up to date', newProject: false }
+    } else if (result === null) {
       return
     }
     setFadeOut(false)
-    setSaveStatus(msg)
+    setSaveStatus(result.message)
     clearInterval(statusTimeout)
     statusTimeout = setTimeout(() => setFadeOut(true), 4000)
+    if (result.newProject) {
+      setDisableFork(true)
+      clearTimeout(clearForkTimeout)
+      clearForkTimeout = setTimeout(() => setDisableFork(false), 10000)
+    }
   }
 
   function updateFiles(activeContent: string): File[] {
@@ -172,7 +179,7 @@ export default function ({ runCode }: EditorProps) {
           </div>
           <div class="flex">
             {showSave() && (
-              <div class="toggle">
+              <div class="toggle" title="Save changes to on pydantic.run's infra">
                 <span class="middle">Save</span>
                 <label class="switch">
                   <input
@@ -186,13 +193,18 @@ export default function ({ runCode }: EditorProps) {
             )}
             {showFork() && (
               <div>
-                <button class="blue" onClick={fork} title="Save these files under a new URL">
+                <button
+                  class="blue"
+                  disabled={disableFork()}
+                  onClick={fork}
+                  title={disableFork() ? 'Forking temporarily disabled' : 'Save these files under a new URL'}
+                >
                   Fork
                 </button>
               </div>
             )}
             <div>
-              <button class="green" onClick={run}>
+              <button class="green" onClick={run} title="Run code in your browser and display the output">
                 Run
               </button>
             </div>

@@ -2,12 +2,17 @@ import type { File } from './types'
 
 import defaultPythonCode from './default_code.py?raw'
 
-interface StoreResponse {
+interface StoreHttpResponse {
   readKey: string
   writeKey: string
 }
 
-export async function store(files: File[] | null, fork: boolean = false): Promise<string | null> {
+interface StoreResult {
+  message: string
+  newProject: boolean
+}
+
+export async function store(files: File[] | null, fork: boolean = false): Promise<StoreResult | null> {
   const readKey = getReadKey(location.pathname)
   const body = JSON.stringify({ files })
   let url = '/api/store/new'
@@ -39,14 +44,14 @@ export async function store(files: File[] | null, fork: boolean = false): Promis
   }
   if (readKey && writeKey && !fork) {
     localStorage.setItem(getContentKey(readKey), body)
-    return 'Changes saved'
+    return { message: 'Changes saved', newProject: false }
   } else {
-    const data: StoreResponse = await r.json()
+    const data: StoreHttpResponse = await r.json()
     localStorage.setItem(getContentKey(data.readKey), body)
     const path = `/store/${data.readKey}`
     localStorage.setItem(getWriteKey(data.readKey), data.writeKey)
     history.pushState({}, '', path)
-    return 'New project created'
+    return { message: 'New project created', newProject: true }
   }
 }
 
