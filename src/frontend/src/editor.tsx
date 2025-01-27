@@ -24,7 +24,10 @@ export default function ({ runCode }: EditorProps) {
   let clearForkTimeout: number
 
   onMount(async () => {
-    const [{ Editor, KeyMod, KeyCode }, { files, allowSave, allowFork }] = await Promise.all([import('./monacoEditor'), retrieve()])
+    const [{ Editor, KeyMod, KeyCode }, { files, allowSave, allowFork }] = await Promise.all([
+      import('./monacoEditor'),
+      retrieve(),
+    ])
 
     const active = findActive(files)
     const file = files.find((f) => f.activeIndex === active)

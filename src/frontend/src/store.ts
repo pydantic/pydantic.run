@@ -63,7 +63,7 @@ interface InitialState {
 }
 
 export async function retrieve(): Promise<InitialState> {
-  const {pathname} = location
+  const { pathname } = location
   if (pathname.startsWith('/store/')) {
     const readKey = getReadKey(pathname)
     if (readKey) {
