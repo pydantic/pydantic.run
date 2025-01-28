@@ -7,7 +7,7 @@ import type { WorkerResponse, RunCode, CodeFile } from './types'
 import { Examples } from './examples'
 
 const decoder = new TextDecoder()
-const ansiConverter = new Convert()
+const ansiConverter = new Convert({ colors: { 1: '#CE9178', 4: '#569CD6', 5: '#BD00BD' } })
 
 export default function () {
   const [status, setStatus] = createSignal('Launching Python...')
@@ -69,11 +69,11 @@ export default function () {
       <header>
         <h1>pydantic.run</h1>
         <aside>
-          Python browser sandbox,{' '}
+          Python browser sandbox, see{' '}
           <a href="https://github.com/pydantic/pydantic.run" target="_blank">
-            learn more
-          </a>
-          .
+            github.com/pydantic/pydantic.run
+          </a>{' '}
+          for more info.
         </aside>
         <Examples />
       </header>
@@ -102,7 +102,7 @@ function escapeHTML(html: string): string {
 function replaceAnsiLinks(terminalOutput: string): string {
   return terminalOutput.replace(
     // eslint-disable-next-line no-control-regex
-    /\u001b]8;id=\d+;(.+?)\u001b\\\u001b\[4;\d+m(.+?)\u001b\[0m\u001b]8;;\u001b\\/g,
+    /\x1B]8;id=\d+;(.+?)\x1B\\(?:\x1B\[\d+;\d+m)?(.+?)(?:\x1B\[0m)?\x1B]8;;\x1B\\/g,
     (_, url, text) => `<a href="${url}" target="_blank">${text}</a>`,
   )
 }

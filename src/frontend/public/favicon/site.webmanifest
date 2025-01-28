@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "short_name": "",
+  "name": "pydantic.run",
+  "short_name": "pydantic.run",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
