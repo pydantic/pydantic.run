@@ -18,18 +18,18 @@ To create a sandbox, make a `GET` request to `https://pydantic.run/new`, with th
 
 The response is a 302 redirect to the newly created sandbox, hence you can direct a user to a sandbox with the code you want them to see. Repeated requests with the same `files` will use the same sandbox.
 
-`files` should be a list of dicts with the following keys:
+`files` should be an array of objects with the following keys:
 
-- `name` - the name of the file
-- `content` - the content of the file
-- **Optionally** `activeIndex` - integer indicating which tab is open by default, the highest index is selected by default
+- `name` - (string) the name of the file
+- `content` - (string) the content of the file
+- **Optionally** `activeIndex` - (integer) indicating with file/tab is open by default, the highest value wins
 
 Here's a minimal HTML page that provides a link to create a new sandbox with two files:
 
 ```html
-<div id="root">loading...</div>
+<div>loading...</div>
 <script>
-  files = [
+  const files = [
     {
       name: 'README.md',
       content: '# Example\n\nThis is an example.',
@@ -42,7 +42,6 @@ Here's a minimal HTML page that provides a link to create a new sandbox with two
   ]
   const redirectUrl = new URL('https://pydantic.run/new')
   redirectUrl.searchParams.append('files', JSON.stringify(files))
-  const root = document.getElementById('root')
-  root.innerHTML = `<a href="${redirectUrl}">Click here to create a new sandbox</a>`
+  document.querySelector('div').innerHTML = `<a href="${redirectUrl}">Click here to create a new sandbox</a>`
 </script>
 ```
