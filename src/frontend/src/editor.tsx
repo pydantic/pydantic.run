@@ -62,7 +62,7 @@ export default function ({ runCode }: EditorProps) {
     setShowSave(true)
     setShowFork(true)
     if (verbose && result === null) {
-      result = { message: 'Up to date', newProject: false }
+      result = { message: 'Up to date', newSandbox: false }
     } else if (result === null) {
       return
     }
@@ -70,7 +70,7 @@ export default function ({ runCode }: EditorProps) {
     setSaveStatus(result.message)
     clearInterval(statusTimeout)
     statusTimeout = setTimeout(() => setFadeOut(true), 4000)
-    if (result.newProject) {
+    if (result.newSandbox) {
       setDisableFork(true)
       clearTimeout(clearForkTimeout)
       clearForkTimeout = setTimeout(() => setDisableFork(false), 10000)
