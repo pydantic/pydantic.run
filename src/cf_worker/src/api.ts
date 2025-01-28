@@ -31,7 +31,7 @@ export async function api(url: URL, request: Request, env: Env): Promise<Respons
 async function get(readKey: string, env: Env): Promise<Response> {
   const object = await env.BUCKET.get(filesPath(readKey))
   if (object === null) {
-    return new Response('Project not found', { status: 404 })
+    return new Response('Sandbox not found', { status: 404 })
   } else {
     return new Response(object.body, { headers: { 'content-type': 'application/json' } })
   }

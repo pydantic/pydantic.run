@@ -8,7 +8,7 @@ interface StoreHttpResponse {
 
 interface StoreResult {
   message: string
-  newProject: boolean
+  newSandbox: boolean
 }
 
 export async function store(files: CodeFile[] | null, fork: boolean = false): Promise<StoreResult | null> {
@@ -27,7 +27,7 @@ export async function store(files: CodeFile[] | null, fork: boolean = false): Pr
       }
     }
   }
-  console.debug(writeKey ? 'saving changes' : 'creating new project')
+  console.debug(writeKey ? 'saving changes' : 'creating new sandbox')
 
   const r = await fetch(url, {
     method: 'POST',
@@ -43,14 +43,14 @@ export async function store(files: CodeFile[] | null, fork: boolean = false): Pr
   }
   if (readKey && writeKey && !fork) {
     localStorage.setItem(getContentKey(readKey), body)
-    return { message: 'Changes saved', newProject: false }
+    return { message: 'Changes saved', newSandbox: false }
   } else {
     const data: StoreHttpResponse = await r.json()
     localStorage.setItem(getContentKey(data.readKey), body)
     const path = `/store/${data.readKey}`
     localStorage.setItem(getWriteKey(data.readKey), data.writeKey)
     history.pushState({}, '', path)
-    return { message: 'New project created', newProject: true }
+    return { message: 'New sandbox created', newSandbox: true }
   }
 }
 
