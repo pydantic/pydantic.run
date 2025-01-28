@@ -4,7 +4,6 @@ import Convert from 'ansi-to-html'
 import Editor from './editor'
 import Worker from './worker?worker'
 import type { WorkerResponse, RunCode, CodeFile } from './types'
-import { Examples } from './examples'
 
 const decoder = new TextDecoder()
 const ansiConverter = new Convert({ colors: { 1: '#CE9178', 4: '#569CD6', 5: '#BD00BD' } })
@@ -73,9 +72,8 @@ export default function () {
           <a href="https://github.com/pydantic/pydantic.run" target="_blank">
             github.com/pydantic/pydantic.run
           </a>{' '}
-          for more info.
+          for more info. <a href="/blank">reset sandbox</a>.
         </aside>
-        <Examples />
       </header>
       <section>
         <Editor runCode={runCode} />

@@ -1,5 +1,4 @@
 import type { CodeFile } from './types'
-import { getExample } from './examples'
 
 interface StoreHttpResponse {
   readKey: string
@@ -78,8 +77,18 @@ export async function retrieve(): Promise<InitialState> {
       }
     }
   }
+  const files = [
+    {
+      name: 'main.py',
+      content: `print('hello world')`,
+      activeIndex: 0,
+    },
+  ]
+  if (pathname.startsWith('/blank')) {
+    files[0].content = ''
+  }
   return {
-    files: getExample(pathname),
+    files,
     allowSave: true,
     allowFork: false,
   }
