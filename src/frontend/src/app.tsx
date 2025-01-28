@@ -102,7 +102,7 @@ function escapeHTML(html: string): string {
 function replaceAnsiLinks(terminalOutput: string): string {
   return terminalOutput.replace(
     // eslint-disable-next-line no-control-regex
-    /\u001b]8;id=\d+;(.+?)\u001b\\\u001b\[4;\d+m(.+?)\u001b\[0m\u001b]8;;\u001b\\/g,
+    /\x1B]8;id=\d+;(.+?)\x1B\\(?:\x1B\[\d+;\d+m)?(.+?)(?:\x1B\[0m)?\x1B]8;;\x1B\\/g,
     (_, url, text) => `<a href="${url}" target="_blank">${text}</a>`,
   )
 }

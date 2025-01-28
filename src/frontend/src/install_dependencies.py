@@ -154,14 +154,18 @@ async def _find_import_dependencies(files: list[File]) -> dict[str, None]:
     return deps
 
 
-def _find_imports_to_install(imports: list[str]) -> dict[str, None]:
-    """Given a list of module names being imported, return package that are not installed."""
-    to_package_name = pyodide_js._api._import_name_to_package_name.to_py()
+TO_PACKAGE_NAME: dict[str, str] = pyodide_js._api._import_name_to_package_name.to_py()
 
+
+def _find_imports_to_install(imports: list[str]) -> dict[str, None]:
+    """Given a list of module names being imported, return packages that are not installed."""
     to_install: dict[str, None] = {}
     for module in imports:
         try:
             importlib.import_module(module)
         except ModuleNotFoundError:
-            to_install[to_package_name.get(module, module)] = None
+            if package_name := TO_PACKAGE_NAME.get(module):
+                to_install[package_name] = None
+            elif '.' not in module:
+                to_install[module] = None
     return to_install
