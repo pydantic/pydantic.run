@@ -107,7 +107,8 @@ async function getPyodideEnv(): Promise<PyodideEnv> {
       message: `Python: ${pv.major}.${pv.minor}.${pv.micro} Pyodide: ${pyodide.version}`,
     })
     setupStreams(pyodide)
-    await pyodide.loadPackage(['micropip', 'pygments'])
+    // pygments seems to be required to get rich to work properly, ssl is required for FastAPI
+    await pyodide.loadPackage(['micropip', 'pygments', 'ssl'])
 
     const dirPath = '/tmp/pydantic_run'
     sys.path.append(dirPath)
