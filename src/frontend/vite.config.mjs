@@ -14,7 +14,12 @@ customLogger.warn = (msg, options) => {
 }
 
 export default defineConfig({
-  plugins: [monacoEditorEsmPlugin({}), solidPlugin()],
+  plugins: [
+    monacoEditorEsmPlugin({
+      languageWorkers: ['editorWorkerService'],
+    }),
+    solidPlugin(),
+  ],
   worker: {
     format: 'es',
   },

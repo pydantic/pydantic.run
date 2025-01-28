@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from pydantic import BaseModel, PositiveInt
+from devtools import debug
 
 
 class User(BaseModel):
@@ -22,5 +23,5 @@ external_data = {
 
 user = User(**external_data)
 
-print('user id:', user.id)
-print('user model_dump:', user.model_dump())
+debug(user.id)
+debug(user.model_dump())
