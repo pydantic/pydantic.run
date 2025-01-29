@@ -24,10 +24,6 @@ import pyodide_js  # noqa
 
 __all__ = ('install_deps',)
 
-sys.setrecursionlimit(400)
-# user a dict here to maintain order
-_all_dependencies: dict[str, None] = {}
-
 
 class File(TypedDict):
     name: str
@@ -48,10 +44,8 @@ class Error:
 
 
 async def install_deps(files: list[File]) -> Success | Error:
+    sys.setrecursionlimit(400)
     cwd = Path.cwd()
-    for file in cwd.iterdir():
-        if file.name != 'run.py' and file.is_file():
-            file.unlink()
     for file in files:
         (cwd / file['name']).write_text(file['content'])
 
@@ -59,7 +53,7 @@ async def install_deps(files: list[File]) -> Success | Error:
     # waiting for https://github.com/pydantic/platform/pull/7353 and follow up for `/v1/info`
     os.environ['LOGFIRE_BASE_URL'] = 'https://logfire-logs-proxy.pydantic.workers.dev'
 
-    dependencies: dict[str, None] = {}
+    dependencies: list[str] | None = None
     active: File | None = None
     highest = -1
     for file in files:
@@ -72,21 +66,18 @@ async def install_deps(files: list[File]) -> Success | Error:
         dependencies = _find_pep723_dependencies(active['content'])
     if dependencies is None:
         dependencies = await _find_import_dependencies(files)
-    new_dependencies = {dep: None for dep in dependencies if dep not in _all_dependencies}
 
-    if new_dependencies:
-        with _micropip_logging() as file_name:
+    if dependencies:
+        with _micropip_logging() as logs_filename:
             try:
-                await micropip.install(new_dependencies.keys(), keep_going=True)
+                await micropip.install(dependencies, keep_going=True)
                 importlib.invalidate_caches()
             except Exception:
-                with open(file_name) as f:
+                with open(logs_filename) as f:
                     logs = f.read()
                 return Error(message=f'{logs}\n{traceback.format_exc()}')
 
-        _all_dependencies.update(new_dependencies)
-
-    return Success(message=', '.join(_all_dependencies.keys()))
+    return Success(message=', '.join(dependencies))
 
 
 @contextmanager
@@ -107,7 +98,7 @@ def _micropip_logging() -> Iterable[str]:
         logger.removeHandler(handler)
 
 
-def _find_pep723_dependencies(script: str) -> dict[str, None] | None:
+def _find_pep723_dependencies(script: str) -> list[str] | None:
     """Extract dependencies from a script with PEP 723 metadata."""
     metadata = _read_pep723_metadata(script)
     dependencies = metadata.get('dependencies')
@@ -116,7 +107,7 @@ def _find_pep723_dependencies(script: str) -> dict[str, None] | None:
     else:
         assert isinstance(dependencies, list), 'dependencies must be a list'
         assert all(isinstance(dep, str) for dep in dependencies), 'dependencies must be a list of strings'
-        return {dep: None for dep in dependencies}
+        return dependencies
 
 
 def _read_pep723_metadata(script: str) -> dict[str, Any]:
@@ -141,31 +132,29 @@ def _read_pep723_metadata(script: str) -> dict[str, Any]:
         return {}
 
 
-async def _find_import_dependencies(files: list[File]) -> dict[str, None]:
+async def _find_import_dependencies(files: list[File]) -> list[str]:
     """Find dependencies in imports."""
-    deps: dict[str, None] = {}
+    deps: list[str] = []
     for file in files:
         try:
             imports: list[str] = find_imports(file['content'])
         except SyntaxError:
             pass
         else:
-            deps.update(_find_imports_to_install(imports))
+            deps.extend(_find_imports_to_install(imports))
     return deps
 
 
 TO_PACKAGE_NAME: dict[str, str] = pyodide_js._api._import_name_to_package_name.to_py()
 
 
-def _find_imports_to_install(imports: list[str]) -> dict[str, None]:
+def _find_imports_to_install(imports: list[str]) -> Iterable[str]:
     """Given a list of module names being imported, return packages that are not installed."""
-    to_install: dict[str, None] = {}
     for module in imports:
         try:
             importlib.import_module(module)
         except ModuleNotFoundError:
             if package_name := TO_PACKAGE_NAME.get(module):
-                to_install[package_name] = None
+                yield package_name
             elif '.' not in module:
-                to_install[module] = None
-    return to_install
+                yield module

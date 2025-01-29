@@ -9,7 +9,7 @@ const decoder = new TextDecoder()
 const ansiConverter = new Convert({ colors: { 1: '#CE9178', 4: '#569CD6', 5: '#BD00BD' } })
 
 export default function () {
-  const [status, setStatus] = createSignal('Launching Python...')
+  const [status, setStatus] = createSignal('Starting Python...')
   const [installed, setInstalled] = createSignal('')
   const [outputHtml, setOutputHtml] = createSignal('')
   const [versions, setVersions] = createSignal('')
@@ -54,7 +54,7 @@ export default function () {
   })
 
   async function runCode(files: CodeFile[], warmup: boolean = false) {
-    setStatus('Launching Python...')
+    setStatus('Starting Python...')
     setInstalled('')
     setOutputHtml('')
     terminalOutput = ''
