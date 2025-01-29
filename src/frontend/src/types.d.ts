@@ -7,7 +7,6 @@ export interface CodeFile {
 
 export interface RunCode {
   files: CodeFile[]
-  warmup?: boolean
 }
 
 export interface Print {

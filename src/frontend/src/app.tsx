@@ -6,10 +6,10 @@ import Worker from './worker?worker'
 import type { WorkerResponse, RunCode, CodeFile } from './types'
 
 const decoder = new TextDecoder()
-const ansiConverter = new Convert({ colors: { 1: '#CE9178', 4: '#569CD6', 5: '#BD00BD' } })
+const ansiConverter = new Convert({ colors: { 1: '#CE9178', 4: '#569CFF', 5: '#F00' } })
 
 export default function () {
-  const [status, setStatus] = createSignal('Starting Python...')
+  const [status, setStatus] = createSignal<string | null>(null)
   const [installed, setInstalled] = createSignal('')
   const [outputHtml, setOutputHtml] = createSignal('')
   const [versions, setVersions] = createSignal('')
@@ -53,13 +53,12 @@ export default function () {
     }
   })
 
-  async function runCode(files: CodeFile[], warmup: boolean = false) {
+  async function runCode(files: CodeFile[]) {
     setStatus('Starting Python...')
     setInstalled('')
     setOutputHtml('')
     terminalOutput = ''
-    const data: RunCode = { files, warmup }
-    worker!.postMessage(data)
+    worker!.postMessage({ files } as RunCode)
   }
 
   // noinspection JSUnusedAssignment
@@ -78,7 +77,7 @@ export default function () {
       <section>
         <Editor runCode={runCode} />
         <div class="col">
-          <div class="status my-5">{status()}</div>
+          <div class="status my-5">{status() || <>&nbsp;</>}</div>
           <div class="installed">{installed()}</div>
           <pre class="output" innerHTML={outputHtml()} ref={outputRef}></pre>
           <div class="status text-right smaller">{versions()}</div>

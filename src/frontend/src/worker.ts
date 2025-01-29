@@ -13,7 +13,7 @@ interface InstallError {
 }
 
 self.onmessage = async ({ data }: { data: RunCode }) => {
-  const { files, warmup } = data
+  const { files } = data
   let msg = ''
   try {
     const [setupTime, { pyodide, installDeps }] = await time(getPyodideEnv())
@@ -36,10 +36,6 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
     post({ kind: 'installed', message: installStatus.message })
     if (installTime > 50) {
       msg += `Installed dependencies in ${asMs(installTime)}, `
-    }
-    if (warmup) {
-      post({ kind: 'status', message: `${msg}Ready` })
-      return
     }
     post({ kind: 'status', message: `${msg}running code…` })
 
@@ -97,8 +93,7 @@ interface PyodideEnv {
 async function getPyodideEnv(): Promise<PyodideEnv> {
   const pyodide = await loadPyodide({
     indexURL: `https://cdn.jsdelivr.net/pyodide/v${pyodideVersion}/full/`,
-    // pygments seems to be required to get rich to work properly, ssl is required for FastAPI
-    packages: ['micropip', 'pygments', 'ssl'],
+    packages: ['micropip'],
   })
   const sys = pyodide.pyimport('sys')
   const pv = sys.version_info

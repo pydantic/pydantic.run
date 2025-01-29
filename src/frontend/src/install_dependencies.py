@@ -16,8 +16,6 @@ from pathlib import Path
 from typing import Any, TypedDict, Iterable, Literal
 import importlib.util
 
-import micropip  # noqa
-from micropip import logging as micropip_logging  # noqa
 import tomllib
 from pyodide.code import find_imports  # noqa
 import pyodide_js  # noqa
@@ -68,6 +66,23 @@ async def install_deps(files: list[File]) -> Success | Error:
         dependencies = await _find_import_dependencies(files)
 
     if dependencies:
+        # pygments seems to be required to get rich to work properly, ssl is required for FastAPI and HTTPX
+        install_pygments = False
+        install_ssl = False
+        for d in dependencies:
+            if d.startswith(('logfire', 'rich')):
+                install_pygments = True
+            elif d.startswith(('fastapi', 'httpx')):
+                install_ssl = True
+            if install_pygments and install_ssl:
+                break
+
+        if install_pygments:
+            dependencies.append('pygments')
+        if install_ssl:
+            dependencies.append('ssl')
+
+        import micropip  # noqa
         with _micropip_logging() as logs_filename:
             try:
                 await micropip.install(dependencies, keep_going=True)
@@ -82,6 +97,8 @@ async def install_deps(files: list[File]) -> Success | Error:
 
 @contextmanager
 def _micropip_logging() -> Iterable[str]:
+    from micropip import logging as micropip_logging  # noqa
+
     micropip_logging.setup_logging()
     logger = logging.getLogger('micropip')
     logger.handlers.clear()

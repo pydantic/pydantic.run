@@ -6,7 +6,7 @@ import { Tabs, findActive } from './tabs'
 import type { Editor } from './monacoEditor'
 
 interface EditorProps {
-  runCode: (files: CodeFile[], warmup?: boolean) => void
+  runCode: (files: CodeFile[]) => void
 }
 
 export default function ({ runCode }: EditorProps) {
@@ -36,7 +36,6 @@ export default function ({ runCode }: EditorProps) {
     setFiles(files)
     setShowSave(allowSave)
     setShowFork(allowFork)
-    runCode(files, true)
 
     editor.addCommand(KeyMod.CtrlCmd | KeyCode.Enter, run)
     editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyS, () => save(updateFiles(editor!.getValue()), true))
