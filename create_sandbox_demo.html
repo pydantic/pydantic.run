@@ -1,0 +1,17 @@
+<div>loading...</div>
+<script>
+  const files = [
+    {
+      name: 'main.py',
+      content: 'print("This is an example!")',
+      activeIndex: 1,
+    },
+    {
+      name: 'another.py',
+      content: 'x = 42\nprint(f"The answer is {x}")',
+    },
+  ]
+  const redirectUrl = new URL('https://pydantic.run/new')
+  redirectUrl.searchParams.append('files', JSON.stringify(files))
+  document.querySelector('div').innerHTML = `<a href="${redirectUrl}">Click here to create a new sandbox</a>`
+</script>
