@@ -151,12 +151,12 @@ def _read_pep723_metadata(code: str) -> dict[str, Any]:
         return {}
 
 
-async def _find_import_dependencies(code: str) -> list[str]:
+async def _find_import_dependencies(code: str) -> list[str] | None:
     """Find dependencies in imports."""
     try:
         imports: list[str] = find_imports(code)
     except SyntaxError:
-        return []
+        return
     else:
         return list(_find_imports_to_install(imports))
 
