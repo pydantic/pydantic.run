@@ -51,7 +51,6 @@ async def install_deps(files: list[File]) -> Success | Error:
     # waiting for https://github.com/pydantic/platform/pull/7353 and follow up for `/v1/info`
     os.environ['LOGFIRE_BASE_URL'] = 'https://logfire-logs-proxy.pydantic.workers.dev'
 
-    dependencies: list[str] | None = None
     active: File | None = None
     highest = -1
     for file in files:
@@ -60,10 +59,12 @@ async def install_deps(files: list[File]) -> Success | Error:
             active = file
             highest = active_index
 
+    dependencies: list[str] | None = None
     if active:
-        dependencies = _find_pep723_dependencies(active['content'])
-    if dependencies is None:
-        dependencies = await _find_import_dependencies(files)
+        python_code = active['content']
+        dependencies = _find_pep723_dependencies(python_code)
+        if dependencies is None:
+            dependencies = await _find_import_dependencies(python_code)
 
     if dependencies:
         # pygments seems to be required to get rich to work properly, ssl is required for FastAPI and HTTPX
@@ -77,15 +78,16 @@ async def install_deps(files: list[File]) -> Success | Error:
             if install_pygments and install_ssl:
                 break
 
+        install_dependencies = dependencies.copy()
         if install_pygments:
-            dependencies.append('pygments')
+            install_dependencies.append('pygments')
         if install_ssl:
-            dependencies.append('ssl')
+            install_dependencies.append('ssl')
 
         import micropip  # noqa
         with _micropip_logging() as logs_filename:
             try:
-                await micropip.install(dependencies, keep_going=True)
+                await micropip.install(install_dependencies, keep_going=True)
                 importlib.invalidate_caches()
             except Exception:
                 with open(logs_filename) as f:
@@ -115,9 +117,9 @@ def _micropip_logging() -> Iterable[str]:
         logger.removeHandler(handler)
 
 
-def _find_pep723_dependencies(script: str) -> list[str] | None:
+def _find_pep723_dependencies(code: str) -> list[str] | None:
     """Extract dependencies from a script with PEP 723 metadata."""
-    metadata = _read_pep723_metadata(script)
+    metadata = _read_pep723_metadata(code)
     dependencies = metadata.get('dependencies')
     if dependencies is None:
         return None
@@ -127,7 +129,7 @@ def _find_pep723_dependencies(script: str) -> list[str] | None:
         return dependencies
 
 
-def _read_pep723_metadata(script: str) -> dict[str, Any]:
+def _read_pep723_metadata(code: str) -> dict[str, Any]:
     """Read PEP 723 script metadata.
 
     Copied from https://packaging.python.org/en/latest/specifications/inline-script-metadata/#reference-implementation
@@ -135,7 +137,7 @@ def _read_pep723_metadata(script: str) -> dict[str, Any]:
     name = 'script'
     magic_comment_regex = r'(?m)^# /// (?P<type>[a-zA-Z0-9-]+)$\s(?P<content>(^#(| .*)$\s)+)^# ///$'
     matches = list(
-        filter(lambda m: m.group('type') == name, re.finditer(magic_comment_regex, script))
+        filter(lambda m: m.group('type') == name, re.finditer(magic_comment_regex, code))
     )
     if len(matches) > 1:
         raise ValueError(f'Multiple {name} blocks found')
@@ -149,17 +151,14 @@ def _read_pep723_metadata(script: str) -> dict[str, Any]:
         return {}
 
 
-async def _find_import_dependencies(files: list[File]) -> list[str]:
+async def _find_import_dependencies(code: str) -> list[str]:
     """Find dependencies in imports."""
-    deps: list[str] = []
-    for file in files:
-        try:
-            imports: list[str] = find_imports(file['content'])
-        except SyntaxError:
-            pass
-        else:
-            deps.extend(_find_imports_to_install(imports))
-    return deps
+    try:
+        imports: list[str] = find_imports(code)
+    except SyntaxError:
+        return []
+    else:
+        return list(_find_imports_to_install(imports))
 
 
 TO_PACKAGE_NAME: dict[str, str] = pyodide_js._api._import_name_to_package_name.to_py()
