@@ -93,34 +93,32 @@ interface PyodideEnv {
   installDeps: any
 }
 
-let pyodideEnv: PyodideEnv | null = null
-
+// we rerun this on every invocation to avoid issues with conflicting packages
 async function getPyodideEnv(): Promise<PyodideEnv> {
-  if (!pyodideEnv) {
-    const pyodide = await loadPyodide({
-      indexURL: `https://cdn.jsdelivr.net/pyodide/v${pyodideVersion}/full/`,
-    })
-    const sys = pyodide.pyimport('sys')
-    const pv = sys.version_info
-    post({
-      kind: 'versions',
-      message: `Python: ${pv.major}.${pv.minor}.${pv.micro} Pyodide: ${pyodide.version}`,
-    })
-    setupStreams(pyodide)
+  const pyodide = await loadPyodide({
+    indexURL: `https://cdn.jsdelivr.net/pyodide/v${pyodideVersion}/full/`,
     // pygments seems to be required to get rich to work properly, ssl is required for FastAPI
-    await pyodide.loadPackage(['micropip', 'pygments', 'ssl'])
+    packages: ['micropip', 'pygments', 'ssl'],
+  })
+  const sys = pyodide.pyimport('sys')
+  const pv = sys.version_info
+  post({
+    kind: 'versions',
+    message: `Python: ${pv.major}.${pv.minor}.${pv.micro} Pyodide: ${pyodide.version}`,
+  })
+  setupStreams(pyodide)
 
-    const dirPath = '/tmp/pydantic_run'
-    sys.path.append(dirPath)
-    const pathlib = pyodide.pyimport('pathlib')
-    pathlib.Path(dirPath).mkdir()
-    const moduleName = '_install_dependencies'
-    pathlib.Path(`${dirPath}/${moduleName}.py`).write_text(installPythonCode)
-    const installDeps = pyodide.pyimport(moduleName)
+  const dirPath = '/tmp/pydantic_run'
+  sys.path.append(dirPath)
+  const pathlib = pyodide.pyimport('pathlib')
+  pathlib.Path(dirPath).mkdir()
+  const moduleName = '_install_dependencies'
+  pathlib.Path(`${dirPath}/${moduleName}.py`).write_text(installPythonCode)
 
-    pyodideEnv = { pyodide, installDeps }
+  return {
+    pyodide,
+    installDeps: pyodide.pyimport(moduleName),
   }
-  return pyodideEnv
 }
 
 function setupStreams(pyodide: PyodideInterface) {
