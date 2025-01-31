@@ -99,7 +99,8 @@ async function getPyodideEnv(): Promise<PyodideEnv> {
   const pv = sys.version_info
   post({
     kind: 'versions',
-    message: `Python: ${pv.major}.${pv.minor}.${pv.micro} Pyodide: ${pyodide.version}`,
+    python: `${pv.major}.${pv.minor}.${pv.micro}`,
+    pyodide: pyodide.version,
   })
   setupStreams(pyodide)
 
