@@ -4,7 +4,7 @@ $background: #1e1f2e;
 $border: #34364f;
 $btn-green: #28a745;
 $btn-blue: #007bff;
-$tab-border: #705326;
+$tab-hover-border: #705326;
 $mobile-limit: 800px;
 
 html,
@@ -170,12 +170,13 @@ button {
     color: white;
     border-top: 1px solid $border;
     border-right: 1px solid $border;
+    background: color.adjust($background, $lightness: 10%);
   }
   .tab:hover {
-    background: #27293c;
+    background: color.adjust($background, $lightness: -15%);
   }
   .active {
-    background: $border !important;
+    background: color.adjust($background, $lightness: -5%);
   }
   .new {
     padding: 8px 15px;
@@ -183,7 +184,7 @@ button {
     border: 1px solid transparent;
   }
   .new:hover {
-    border: 1px solid $tab-border;
+    border: 1px solid $tab-hover-border;
   }
   .close {
     display: inline-block;
@@ -193,7 +194,7 @@ button {
     border: 1px solid transparent;
   }
   .close:hover {
-    border: 1px solid $tab-border;
+    border: 1px solid $tab-hover-border;
   }
 }
 
