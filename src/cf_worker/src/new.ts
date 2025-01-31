@@ -20,7 +20,12 @@ export async function createNew(url: URL, request: Request, env: Env): Promise<R
     }
     await env.BUCKET.put(filesPath(readKey), JSON.stringify({ files: result }))
   }
-  return Response.redirect(`${url.origin}/store/${readKey}`, 302)
+  let redirectUrl = `${url.origin}/store/${readKey}`
+  const tab = url.searchParams.get('tab')
+  if (tab) {
+    redirectUrl += `?tab=${tab}`
+  }
+  return Response.redirect(redirectUrl, 302)
 }
 
 const filesSchema = z.array(

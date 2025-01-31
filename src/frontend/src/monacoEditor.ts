@@ -48,7 +48,6 @@ export class Editor {
 
   setFile(file: CodeFile) {
     const language = this.getLanguage(file)
-    console.log('setFile', file, language)
     if (language) {
       monaco.editor.setModelLanguage(this.editor.getModel()!, language)
     }
