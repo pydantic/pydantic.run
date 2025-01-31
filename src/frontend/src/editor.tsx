@@ -37,6 +37,12 @@ export default function ({ runCode }: EditorProps) {
     setShowSave(allowSave)
     setShowFork(allowFork)
 
+    const searchParams = new URLSearchParams(location.search)
+    const tab = searchParams.get('tab')
+    if (tab && files.find((f) => f.name === tab)) {
+      changeFile(tab)
+    }
+
     editor.addCommand(KeyMod.CtrlCmd | KeyCode.Enter, run)
     editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyS, () => save(updateFiles(editor!.getValue()), true))
     editor.onDidChangeModelContent(() => {

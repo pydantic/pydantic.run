@@ -29,6 +29,8 @@ The response is a 302 redirect to the newly created sandbox, hence you can direc
 - `content` - (string) the content of the file
 - **Optionally** `activeIndex` - (integer) indicating which file/tab is open by default, the highest value wins
 
+You can also set the `tab` parameter to select which tab is open by default, that advantage of using this over `activeIndex` is that it will reuse the same sandbox for requests choosing different tabs.
+
 Here's a minimal HTML page that provides a link to create a new sandbox with two files:
 
 ```html
