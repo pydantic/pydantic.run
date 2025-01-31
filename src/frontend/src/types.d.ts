@@ -14,8 +14,13 @@ export interface Print {
   data: ArrayBuffer[]
 }
 export interface Message {
-  kind: 'status' | 'error' | 'versions' | 'installed'
+  kind: 'status' | 'error' | 'installed'
   message: string
 }
+export interface Versions {
+  kind: 'versions'
+  python: string
+  pyodide: string
+}
 
-export type WorkerResponse = Print | Message
+export type WorkerResponse = Print | Message | Versions

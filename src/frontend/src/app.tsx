@@ -3,7 +3,7 @@ import { createSignal, onMount } from 'solid-js'
 import Convert from 'ansi-to-html'
 import Editor from './editor'
 import Worker from './worker?worker'
-import type { WorkerResponse, RunCode, CodeFile } from './types'
+import type { WorkerResponse, RunCode, CodeFile, Versions } from './types'
 
 const decoder = new TextDecoder()
 const ansiConverter = new Convert({ colors: { 1: '#CE9178', 4: '#569CFF', 5: '#F00' } })
@@ -12,7 +12,7 @@ export default function () {
   const [status, setStatus] = createSignal<string | null>(null)
   const [installed, setInstalled] = createSignal('')
   const [outputHtml, setOutputHtml] = createSignal('')
-  const [versions, setVersions] = createSignal('')
+  const [versions, setVersions] = createSignal<Versions | null>(null)
   let terminalOutput = ''
   let worker: Worker
   let outputRef!: HTMLPreElement
@@ -35,7 +35,7 @@ export default function () {
       } else if (data.kind == 'installed') {
         setInstalled(data.message.length > 0 ? `Installed dependencies: ${data.message}` : '')
       } else {
-        setVersions(data.message)
+        setVersions(data as Versions)
       }
 
       if (newTerminalOutput) {
@@ -80,7 +80,7 @@ export default function () {
           <div class="status my-5">{status() || <>&nbsp;</>}</div>
           <div class="installed">{installed()}</div>
           <pre class="output" innerHTML={outputHtml()} ref={outputRef}></pre>
-          <div class="status text-right smaller">{versions()}</div>
+          <Versions versions={versions()} />
         </div>
       </section>
     </main>
@@ -101,5 +101,29 @@ function replaceAnsiLinks(terminalOutput: string): string {
     // eslint-disable-next-line no-control-regex
     /\x1B]8;id=\d+;(.+?)\x1B\\(?:\x1B\[\d+;\d+m)?(.+?)(?:\x1B\[0m)?\x1B]8;;\x1B\\/g,
     (_, url, text) => `<a href="${url}" target="_blank">${text}</a>`,
+  )
+}
+
+function Versions(props: { versions: Versions | null }) {
+  return (
+    <div class="status text-right smaller">
+      {props.versions && (
+        <>
+          <a
+            href={`https://www.python.org/downloads/release/python-${props.versions.python.replace(/\./g, '')}/`}
+            target="_blank"
+          >
+            Python {props.versions.python}
+          </a>
+          ,{' '}
+          <a
+            href={`https://pyodide.org/en/stable/project/changelog.html#version-${props.versions.pyodide.replace(/\./g, '-')}`}
+            target="_blank"
+          >
+            Pyodide {props.versions.pyodide}
+          </a>
+        </>
+      )}
+    </div>
   )
 }
