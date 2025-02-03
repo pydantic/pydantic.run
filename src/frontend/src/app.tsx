@@ -10,6 +10,7 @@ const ansiConverter = new Convert({ colors: { 1: '#CE9178', 4: '#569CFF', 5: '#F
 
 export default function () {
   const [status, setStatus] = createSignal<string | null>(null)
+  const [running, setRunning] = createSignal<boolean>(false)
   const [installed, setInstalled] = createSignal('')
   const [outputHtml, setOutputHtml] = createSignal('')
   const [versions, setVersions] = createSignal<Versions | null>(null)
@@ -47,6 +48,7 @@ export default function () {
         terminalHtml = ansiConverter.toHtml(terminalHtml)
         // set the output
         setOutputHtml(terminalHtml)
+        setRunning(false)
         // scrolls to the bottom of the div
         outputRef.scrollTop = outputRef.scrollHeight
       }
@@ -54,6 +56,7 @@ export default function () {
   })
 
   async function runCode(files: CodeFile[]) {
+    setRunning(true)
     setStatus('Starting Python...')
     setInstalled('')
     setOutputHtml('')
@@ -75,7 +78,7 @@ export default function () {
         </aside>
       </header>
       <section>
-        <Editor runCode={runCode} />
+        <Editor runCode={runCode} running={running} />
         <div class="col">
           <div class="status my-5">{status() || <>&nbsp;</>}</div>
           <div class="installed">{installed()}</div>

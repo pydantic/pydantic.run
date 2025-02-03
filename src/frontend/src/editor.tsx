@@ -4,12 +4,14 @@ import type { CodeFile } from './types'
 import { retrieve, store } from './store.ts'
 import { Tabs, findActive } from './tabs'
 import type { Editor } from './monacoEditor'
+import type { Accessor } from 'solid-js'
 
 interface EditorProps {
   runCode: (files: CodeFile[]) => void
+  running: Accessor<boolean>
 }
 
-export default function ({ runCode }: EditorProps) {
+export default function ({ runCode, running }: EditorProps) {
   const [saveActive, setSaveActive] = createSignal(false)
   const [saveStatus, setSaveStatus] = createSignal('Changes not saved')
   const [showSave, setShowSave] = createSignal(false)
@@ -187,7 +189,12 @@ export default function ({ runCode }: EditorProps) {
               </div>
             )}
             <div>
-              <button class="green" onClick={run} title="Run code in your browser and display the output">
+              <button
+                class={running() ? 'gray' : 'green'}
+                onClick={run}
+                disabled={running()}
+                title="Run code in your browser and display the output"
+              >
                 Run
               </button>
             </div>
