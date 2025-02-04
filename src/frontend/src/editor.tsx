@@ -190,7 +190,7 @@ export default function (props: EditorProps) {
             )}
             <div>
               <button
-                class='green'
+                class="green"
                 onClick={run}
                 disabled={props.running()}
                 title="Run code in your browser and display the output"
