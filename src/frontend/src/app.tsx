@@ -10,7 +10,7 @@ const ansiConverter = new Convert({ colors: { 1: '#CE9178', 4: '#569CFF', 5: '#F
 
 export default function () {
   const [status, setStatus] = createSignal<string | null>(null)
-  const [running, setRunning] = createSignal<boolean>(false)
+  const [running, setRunning] = createSignal(false)
   const [installed, setInstalled] = createSignal('')
   const [outputHtml, setOutputHtml] = createSignal('')
   const [versions, setVersions] = createSignal<Versions | null>(null)
@@ -38,6 +38,7 @@ export default function () {
       } else {
         setVersions(data as Versions)
       }
+      setRunning(false)
 
       if (newTerminalOutput) {
         // escape HTML codes in the terminal output
@@ -48,7 +49,6 @@ export default function () {
         terminalHtml = ansiConverter.toHtml(terminalHtml)
         // set the output
         setOutputHtml(terminalHtml)
-        setRunning(false)
         // scrolls to the bottom of the div
         outputRef.scrollTop = outputRef.scrollHeight
       }

@@ -11,7 +11,7 @@ interface EditorProps {
   running: Accessor<boolean>
 }
 
-export default function ({ runCode, running }: EditorProps) {
+export default function (props: EditorProps) {
   const [saveActive, setSaveActive] = createSignal(false)
   const [saveStatus, setSaveStatus] = createSignal('Changes not saved')
   const [showSave, setShowSave] = createSignal(false)
@@ -95,7 +95,7 @@ export default function ({ runCode, running }: EditorProps) {
 
   function run() {
     const files = updateFiles(editor!.getValue())
-    runCode(files)
+    props.runCode(files)
     save(files)
   }
 
@@ -190,9 +190,9 @@ export default function ({ runCode, running }: EditorProps) {
             )}
             <div>
               <button
-                class={running() ? 'gray' : 'green'}
+                class='green'
                 onClick={run}
-                disabled={running()}
+                disabled={props.running()}
                 title="Run code in your browser and display the output"
               >
                 Run
