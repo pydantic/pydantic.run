@@ -61,7 +61,7 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
 function formatError(err: any): string {
   let errStr = (err as any).toString()
   if (!errStr.startsWith('PythonError:')) {
-    return errStr
+    return `${errStr}\n\nSome browsers and platforms (like iPhones) don't support running Python, sorry.`
   }
   errStr = errStr.replace(/^PythonError: +/, '')
   // remove frames from inside pyodide
