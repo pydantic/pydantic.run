@@ -78,7 +78,7 @@ export default function () {
         </aside>
       </header>
       <section>
-        <Editor runCode={runCode} running={running} />
+        <Editor runCode={runCode} running={running()} />
         <div class="col">
           <div class="status my-5">{status() || <>&nbsp;</>}</div>
           <div class="installed">{installed()}</div>

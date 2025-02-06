@@ -4,11 +4,10 @@ import type { CodeFile } from './types'
 import { retrieve, store } from './store.ts'
 import { Tabs, findActive } from './tabs'
 import type { Editor } from './monacoEditor'
-import type { Accessor } from 'solid-js'
 
 interface EditorProps {
   runCode: (files: CodeFile[]) => void
-  running: Accessor<boolean>
+  running: boolean
 }
 
 export default function (props: EditorProps) {
@@ -192,7 +191,7 @@ export default function (props: EditorProps) {
               <button
                 class="green"
                 onClick={run}
-                disabled={props.running()}
+                disabled={props.running}
                 title="Run code in your browser and display the output"
               >
                 Run
