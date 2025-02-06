@@ -38,6 +38,7 @@ jobs:
         name: Test deploy
         with:
           command: deploy --dry-run
+          workingDirectory: src/backend
 
   check:
     if: always()
@@ -70,6 +71,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           environment: previews
           command: deploy --var GITHUB_SHA:${{ github.sha }}
+          workingDirectory: src/backend
 
       - name: get preview URL
         id: get_preview_url
@@ -95,3 +97,4 @@ jobs:
         with:
           apiToken: ${{ secrets.cloudflare_api_token }}
           command: deploy --var GITHUB_SHA:${{ github.sha }}
+          workingDirectory: src/backend

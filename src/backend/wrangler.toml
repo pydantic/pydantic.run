@@ -1,20 +1,20 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "pydantic-run"
 compatibility_date = "2025-01-09"
-main = "src/cf_worker/src/index.ts"
+main = "src/index.ts"
 routes = ["pydantic.run/*"]
 workers_dev = false
 
 [build]
-command = "npm run build"
-watch_dir = ["src/frontend/src", "src/cf_worker/src"]
+command = "cd ../frontend && npm run build"
+watch_dir = ["../frontend/src", "src"]
 
 [[r2_buckets]]
 bucket_name = "pydantic-run"
 binding = "BUCKET"
 
 [assets]
-directory = "src/frontend/dist"
+directory = "../frontend/dist"
 binding = "ASSETS"
 
 [env.previews]

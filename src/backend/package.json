@@ -1,0 +1,14 @@
+{
+  "name": "backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "cf-typegen": "wrangler types worker-configuration.d.ts && prettier --write -- worker-configuration.d.ts",
+    "dev": "wrangler dev"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  }
+}
