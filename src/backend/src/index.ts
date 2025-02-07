@@ -9,6 +9,10 @@ export default {
       proxyUrl.pathname = url.pathname
       proxyUrl.search = url.search
       return await fetch(proxyUrl, request)
+    } else if (url.pathname == '/sandbox/run/') {
+      const proxyUrl = new URL(env.SANDBOX)
+      proxyUrl.pathname = '/run/'
+      return await fetch(proxyUrl, request)
     } else if (url.pathname.startsWith('/api/')) {
       return await api(url, request, env)
     } else if (url.pathname === '/new' || url.pathname === '/new/') {
@@ -19,10 +23,6 @@ export default {
     } else if (url.pathname.startsWith('/info')) {
       const git_sha = env.GITHUB_SHA ? env.GITHUB_SHA.substring(0, 7) : 'dev'
       return new Response(`Release version ${git_sha}`)
-    } else if (url.pathname == '/sandbox/run/') {
-      const proxyUrl = new URL(env.SANDBOX)
-      proxyUrl.pathname = '/run/'
-      return await fetch(proxyUrl, request)
     } else {
       const r = await env.ASSETS.fetch(request)
       if (r.status == 404) {
