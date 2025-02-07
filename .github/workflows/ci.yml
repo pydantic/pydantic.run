@@ -65,12 +65,27 @@ jobs:
       - run: npm install
 
       - uses: cloudflare/wrangler-action@v3
+        name: Deploy sandbox-pydantic-run-preview
+        id: deploy_sandbox
+        with:
+          apiToken: ${{ secrets.SC_CLOUDFLARE_API_TOKEN }}
+          environment: previews
+          command: deploy --var GITHUB_SHA:${{ github.sha }}
+          workingDirectory: src/sandbox
+
+      - name: get sandbox preview URL
+        id: get_sandbox_preview_url
+        run: python .github/get_preview_url.py >> $GITHUB_OUTPUT
+        env:
+          DEPLOY_OUTPUT: ${{ steps.deploy_sandbox.outputs.command-output }}
+
+      - uses: cloudflare/wrangler-action@v3
         name: Deploy pydantic-run-preview
         id: deploy
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           environment: previews
-          command: deploy --var GITHUB_SHA:${{ github.sha }}
+          command: deploy --var GITHUB_SHA:${{ github.sha }} --var SANDBOX:${{ steps.get_sandbox_preview_url.outputs.preview_url }}
           workingDirectory: src/backend
 
       - name: get preview URL

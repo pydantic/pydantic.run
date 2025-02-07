@@ -6,6 +6,7 @@ export interface CodeFile {
 }
 
 export interface RunCode {
+  serverSide: boolean
   files: CodeFile[]
 }
 

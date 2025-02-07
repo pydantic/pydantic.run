@@ -12,8 +12,16 @@ interface InstallError {
   message: string
 }
 
-self.onmessage = async ({ data }: { data: RunCode }) => {
-  const { files } = data
+self.onmessage = ({ data }: { data: RunCode }) => {
+  const { serverSide, files } = data
+  if (serverSide) {
+    runOnServer(files)
+  } else {
+    runInBrowser(files)
+  }
+}
+
+async function runInBrowser(files: CodeFile[]) {
   let msg = ''
   try {
     const [setupTime, { pyodide, installDeps }] = await time(getPyodideEnv())
@@ -56,6 +64,51 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
     post({ kind: 'status', message: `${msg}Error occurred` })
     post({ kind: 'error', message: formatError(err) })
   }
+}
+
+async function runOnServer(files: CodeFile[]) {
+  const active = findActive(files)
+  const activeFile = files.find((f) => f.activeIndex === active)!
+  post({ kind: 'status', message: `Running code on sandbox.pydantic.run…` })
+  try {
+    const [fetchTime, response] = await time(
+      fetch('/sandbox/run/', {
+        method: 'POST',
+        body: activeFile.content,
+        headers: {
+          'file-name': activeFile.name,
+        },
+      }),
+    )
+    if (response.ok) {
+      const data: RunResult = await response.json()
+      let text = data.stream.map(({ v }) => v).join('')
+      if (data.result.status === 'error') {
+        text += `\n\n${data.result.error}`
+      } else if ((data.mode == 'main' || data.mode == 'async-main') && data.result.return_value !== null) {
+        text += `\n\nmain return value: ${JSON.stringify(data.result.return_value)}`
+      }
+      post({
+        kind: 'status',
+        message: `Ran code on sandbox.pydantic.run in ${asMs(fetchTime)}, execution time ${asMs(data.run_time * 1000)}`,
+      })
+      post({ kind: 'print', data: [new TextEncoder().encode(text)] })
+    } else {
+      post({ kind: 'status', message: 'Error running code in sandbox' })
+      post({ kind: 'error', message: `${response.status}: await response.text()` })
+    }
+  } catch (err) {
+    console.warn(err)
+    post({ kind: 'status', message: 'Error occurred' })
+    post({ kind: 'error', message: (err as any).toString() })
+  }
+}
+
+interface RunResult {
+  stream: { s: 'out' | 'err'; v: string; t: number }[]
+  mode: 'main' | 'async-main' | 'no-main-function' | 'unknown'
+  result: { status: 'error'; error: string } | { status: 'success'; return_value: any }
+  run_time: number
 }
 
 function formatError(err: any): string {

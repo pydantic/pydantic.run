@@ -6,7 +6,7 @@ import { Tabs, findActive } from './tabs'
 import type { Editor } from './monacoEditor'
 
 interface EditorProps {
-  runCode: (files: CodeFile[]) => void
+  runCode: (serverSide: boolean, files: CodeFile[]) => void
 }
 
 export default function ({ runCode }: EditorProps) {
@@ -17,6 +17,8 @@ export default function ({ runCode }: EditorProps) {
   const [disableFork, setDisableFork] = createSignal(false)
   const [files, setFiles] = createSignal<CodeFile[]>([])
   const [fadeOut, setFadeOut] = createSignal(false)
+  const showServer = location.hash.includes('sandbox')
+  const [runOnServer, setRunOnServer] = createSignal(true)
   let editor: Editor | null = null
   const editorEl = (<div class="editor" />) as HTMLElement
   let statusTimeout: number
@@ -93,7 +95,7 @@ export default function ({ runCode }: EditorProps) {
 
   function run() {
     const files = updateFiles(editor!.getValue())
-    runCode(files)
+    runCode(showServer && runOnServer(), files)
     save(files)
   }
 
@@ -157,13 +159,26 @@ export default function ({ runCode }: EditorProps) {
         <Tabs files={files()} addFile={addFile} changeFile={changeFile} closeFile={closeFile} />
         {editorEl}
         <footer>
-          <div>
-            <span class={fadeOut() ? 'middle status fade fadeout' : 'middle status fade'}>{saveStatus()}</span>
+          <div class="footer-status">
+            <span class={fadeOut() ? 'status fade fadeout' : 'status fade'}>{saveStatus()}</span>
           </div>
-          <div class="flex">
+          <div class="footer-buttons">
+            {showServer && (
+              <div class="toggle" title="Run code on pydantic.run's infra">
+                <div>Run on server</div>
+                <label class="switch">
+                  <input
+                    type="checkbox"
+                    checked={runOnServer()}
+                    onChange={(e) => setRunOnServer(e.currentTarget.checked)}
+                  />
+                  <span class="slider"></span>
+                </label>
+              </div>
+            )}
             {showSave() && (
-              <div class="toggle" title="Save changes to on pydantic.run's infra">
-                <span class="middle">Save</span>
+              <div class="toggle" title="Save changes to pydantic.run's infra">
+                <div>Save</div>
                 <label class="switch">
                   <input
                     type="checkbox"

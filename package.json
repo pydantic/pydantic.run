@@ -7,8 +7,8 @@
     "src/*"
   ],
   "scripts": {
-    "format": "prettier --write -- .",
-    "lint": "eslint --max-warnings=0 src/*/src && prettier --check -- .",
+    "format": "prettier --write -- . && npm run --workspace=sandbox format",
+    "lint": "eslint --max-warnings=0 src/frontend/src src/backend/src && prettier --check -- . && npm run --workspace=sandbox lint",
     "typecheck": "npm run --workspaces typecheck",
     "build": "npm run --workspace=frontend build",
     "cf-typegen": "npm run --workspace=backend cf-typegen",

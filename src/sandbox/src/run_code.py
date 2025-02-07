@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Annotated, Any, Literal, TypedDict
 
 from pydantic import BaseModel, Discriminator
-from pydantic_core import to_json
 
 __all__ = 'run', 'RunResult'
 
@@ -69,12 +68,12 @@ class RunResult(BaseModel):
     result: Annotated[RunError | RunSuccess, Discriminator('status')]
     run_time: float
 
-    def lenient_to_json(self):
-        return to_json(self, indent=2, fallback=fallback)
+    def lenient_to_json(self) -> bytes:
+        return self.__pydantic_serializer__.to_json(self, indent=2, fallback=fallback)
 
 
 def fallback(value: Any) -> Any:
-    tp = type(value)
+    tp: Any = type(value)
     module = tp.__module__
     if module == 'numpy':
         if tp.__name__ in ('ndarray', 'matrix'):
@@ -118,7 +117,7 @@ class StreamBuilder:
     def _stream_append(self) -> None:
         # noinspection PyTypeChecker
         self.stream.append(
-            {
+            {  # pyright: ignore[reportArgumentType]
                 's': self.last_key,
                 'v': ''.join(self.last_text),
                 't': self.last_time - self.start_time,
@@ -139,6 +138,8 @@ async def run_code(file_name: str, code: str) -> tuple[RunMode, RunError | RunSu
     file_path = Path(file_name)
     file_path.write_text(code)
     spec = importlib.util.spec_from_file_location(file_name, file_path)
+    assert spec, f'Failed to create spec for {file_name}'
+    assert spec.loader, f'Failed to create loader for {file_name}'
     module = importlib.util.module_from_spec(spec)
     run_mode = RunMode.unknown
     return_value = None

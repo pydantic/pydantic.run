@@ -12,7 +12,7 @@ dev = ["pyright>=1.1.393", "ruff>=0.9.4"]
 [tool.ruff]
 line-length = 120
 target-version = "py312"
-include = ["src/sandbox/src/**/*.py"]
+include = ["src/**/*.py"]
 
 [tool.ruff.lint]
 extend-select = ["Q", "RUF100", "C90", "UP", "I"]
@@ -22,3 +22,13 @@ mccabe = { max-complexity = 15 }
 
 [tool.ruff.format]
 quote-style = "single"
+
+[tool.pyright]
+typeCheckingMode = "strict"
+#reportMissingTypeStubs = false
+#reportUnnecessaryIsInstance = false
+reportMissingModuleSource = false
+reportUnnecessaryTypeIgnoreComment = true
+venvPath = ".venv"
+include = ["src"]
+extraPaths = ["stubs"]

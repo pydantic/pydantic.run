@@ -2,8 +2,9 @@
 name = "pydantic-run"
 compatibility_date = "2025-01-09"
 main = "src/index.ts"
-routes = ["pydantic.run/*"]
+routes = ["pydantic.run/*", "sandbox.pydantic.run/*"]
 workers_dev = false
+vars = { SANDBOX = "https://sandbox.samuelcolvin.workers.dev" }
 
 [build]
 command = "cd ../frontend && npm run build"
@@ -20,6 +21,7 @@ binding = "ASSETS"
 [env.previews]
 workers_dev = true
 routes = []
+vars = { SANDBOX = "https://sandbox-previews.samuelcolvin.workers.dev" }
 
 [[env.previews.r2_buckets]]
 bucket_name = "pydantic-run-dev"
