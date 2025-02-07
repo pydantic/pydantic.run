@@ -19,12 +19,12 @@ repos:
       - id: lint
         name: Lint
         entry: npm run lint
-        types: [ts, python]
+        types_or: [ts, python]
         language: system
         pass_filenames: false
       - id: typecheck
         name: Typecheck
         entry: npm run typecheck
-        types: [ts, python]
+        types_or: [ts, python]
         language: system
         pass_filenames: false

@@ -61,8 +61,8 @@ Demo [here](https://githubproxy.samuelcolvin.workers.dev/pydantic/pydantic.run/b
 
 **WARNING:**:
 
-1. This feature is experimental in CloudFlare, behaviour might change in future.
-2. The Cloudflare worker running this code is managed by Pydantic, we may change or remove this in future.
+1. This feature is experimental in CloudFlare, behaviour might change in the future.
+2. The Cloudflare worker running this code is managed by Pydantic, we may change or remove this in the future.
 3. While we don't intentionally log the code that is run or it's output, we can't guarantee we won't view or record it at some point.
 
 To run code server-side, using the [pydantic.run](https://pydantic.run) UI, add a `#server` to the end of the URL and reload the page, you'll then see a "run on server" toggle.
@@ -72,3 +72,17 @@ To run code server-side programmatically, make a `POST` request to `https://sand
 If you want the return value of the code, include a function called `main()` (async or not) in the code you send.
 
 Unlike in the browser based `pydantic.run` environment, async code must be wrapped in an async `main` function to be run.
+
+For information about the data returned, see the API documentation at [sandbox.pydantic.run/redoc/](https://sandbox.pydantic.run/redoc/).
+
+The following packages are available server-side:
+
+- `pydantic`
+- `numpy`
+- `httpx`
+- `fastapi` - used to run the server
+
+## Server side limitations
+
+1. You cannot install new packages, and we cannot change the version of packages available, only [these](https://developers.cloudflare.com/workers/languages/python/packages/#supported-packages) packages are available.
+2. The CPU limit on the server is very small, if you want to sleep or do any IO, it will need to be async.
