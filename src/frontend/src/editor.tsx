@@ -17,7 +17,7 @@ export default function ({ runCode }: EditorProps) {
   const [disableFork, setDisableFork] = createSignal(false)
   const [files, setFiles] = createSignal<CodeFile[]>([])
   const [fadeOut, setFadeOut] = createSignal(false)
-  const showServer = location.hash.includes('sandbox')
+  const showServer = location.hash.includes('server')
   const [runOnServer, setRunOnServer] = createSignal(true)
   let editor: Editor | null = null
   const editorEl = (<div class="editor" />) as HTMLElement

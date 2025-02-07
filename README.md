@@ -1,6 +1,6 @@
 # [pydantic.run](https://pydantic.run)
 
-Python browser sandbox based on [Pyodide](https://pyodide.org). Write and share Python code, run it in the browser.
+Python sandbox based on [Pyodide](https://pyodide.org). Write and share Python code, run it in the browser.
 
 Built to demonstrate [Pydantic](https://docs.pydantic.dev), [PydanticAI](https://ai.pydantic.dev), and [Pydantic Logfire](https://docs.pydantic.dev/logfire).
 
@@ -54,3 +54,21 @@ Here's a minimal HTML page that provides a link to create a new sandbox with two
 ```
 
 Demo [here](https://githubproxy.samuelcolvin.workers.dev/pydantic/pydantic.run/blob/main/create_sandbox_demo.html).
+
+## Running code on the server
+
+`pydantic.run` has experimental support for running code server-side using [CloudFlare Python Workers](https://developers.cloudflare.com/workers/languages/python/).
+
+**WARNING:**:
+
+1. This feature is experimental in CloudFlare, behaviour might change in future.
+2. The Cloudflare worker running this code is managed by Pydantic, we may change or remove this in future.
+3. While we don't intentionally log the code that is run or it's output, we can't guarantee we won't view or record it at some point.
+
+To run code server-side, using the [pydantic.run](https://pydantic.run) UI, add a `#server` to the end of the URL and reload the page, you'll then see a "run on server" toggle.
+
+To run code server-side programmatically, make a `POST` request to `https://sandbox.pydantic.run/run/` with the Python code you want to run in the request body.
+
+If you want the return value of the code, include a function called `main()` (async or not) in the code you send.
+
+Unlike in the browser based `pydantic.run` environment, async code must be wrapped in an async `main` function to be run.

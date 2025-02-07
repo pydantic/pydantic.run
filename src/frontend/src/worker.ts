@@ -94,8 +94,10 @@ async function runOnServer(files: CodeFile[]) {
       })
       post({ kind: 'print', data: [new TextEncoder().encode(text)] })
     } else {
+      const text = await response.text()
+      console.warn(`Error running code in sandbox: ${response.status}:`, text)
       post({ kind: 'status', message: 'Error running code in sandbox' })
-      post({ kind: 'error', message: `${response.status}: await response.text()` })
+      post({ kind: 'error', message: `${response.status}: ${text}` })
     }
   } catch (err) {
     console.warn(err)

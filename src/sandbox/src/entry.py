@@ -1,7 +1,6 @@
 import sys
 from typing import Annotated, Any
 
-import pyodide
 from fastapi import FastAPI, Header, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
@@ -51,6 +50,8 @@ class Versions(BaseModel):
 @app.get('/versions/', response_model=Versions)
 async def versions() -> Versions:
     """Get Python and Pyodide versions."""
+    import pyodide
+
     return Versions(python_version=sys.version, pyodide_version=pyodide.__version__)
 
 
