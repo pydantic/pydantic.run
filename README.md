@@ -12,10 +12,50 @@ If you choose to save code, it's stored in CloudFlare's R2 object storage, and s
 
 Dependencies are installed when code is run.
 
-Dependencies can be either:
+Dependencies can be defined in one of two ways:
 
-- defined via [inline script metadata](https://packaging.python.org/en/latest/specifications/inline-script-metadata/#inline-script-metadata) — e.g. a comment at the top of the file, as used by [uv](https://docs.astral.sh/uv/guides/scripts/#declaring-script-dependencies)
-- or, inferred from imports in the code — e.g. `import pydantic` will install the `pydantic` package
+### Inferred from imports
+
+If there's no metadata, dependencies are inferred from imports in the code.
+
+```py
+import pydantic
+
+class Model(pydantic.BaseModel):
+    x: int
+
+print(Model(x='42'))
+```
+
+### Inline script metadata
+
+As introduced in PEP 723, explained [here](https://packaging.python.org/en/latest/specifications/inline-script-metadata/#inline-script-metadata), and popularised by [uv](https://docs.astral.sh/uv/guides/scripts/#declaring-script-dependencies) — dependencies can be defined in a comment at the top of the file.
+
+This allows use of dependencies that aren't imported in the code, and is more explicit.
+
+```py
+# /// script
+# dependencies = ["pydantic", "email-validator"]
+# ///
+import pydantic
+
+class Model(pydantic.BaseModel):
+    email: pydantic.EmailStr
+
+print(Model(email='hello@pydantic.dev'))
+```
+
+It also allows version to be pinned for non-binary packages (Pyodide only supports a single version for the binary packages it supports, like `pydantic` and `numpy`).
+
+```py
+# /// script
+# dependencies = ["rich<13"]
+# ///
+import rich
+from importlib.metadata import version
+
+rich.print(f'[red]Rich version:[/red] [blue]{version('rich')}[/blue]')
+```
 
 ### Sandbox via link
 

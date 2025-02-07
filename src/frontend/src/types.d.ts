@@ -11,7 +11,7 @@ export interface RunCode {
 
 export interface Print {
   kind: 'print'
-  data: ArrayBuffer[]
+  data: Uint8Array[]
 }
 export interface Message {
   kind: 'status' | 'error' | 'installed'

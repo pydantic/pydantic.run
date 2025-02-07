@@ -24,8 +24,7 @@ export default function () {
       if (data.kind == 'print') {
         newTerminalOutput = true
         for (const chunk of data.data) {
-          const arr = new Uint8Array(chunk)
-          terminalOutput += decoder.decode(arr)
+          terminalOutput += decoder.decode(chunk)
         }
       } else if (data.kind == 'status') {
         setStatus(data.message)

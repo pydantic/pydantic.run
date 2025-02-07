@@ -15,8 +15,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TypedDict, Iterable, Literal
 import importlib.util
+from urllib.parse import urlparse
 
 import tomllib
+from packaging.tags import parse_tag  # noqa
+from packaging.version import Version  # noqa
+
+import micropip  # noqa
+from micropip import transaction  # noqa
+from micropip.wheelinfo import WheelInfo  # noqa
+
 from pyodide.code import find_imports  # noqa
 import pyodide_js  # noqa
 
@@ -39,6 +47,33 @@ class Success:
 class Error:
     message: str
     kind: Literal['error'] = 'error'
+
+
+# This is a temporary hack to install jiter from a URL until
+# https://github.com/pyodide/pyodide/pull/5388 is released.
+real_find_wheel = transaction.find_wheel
+
+
+def custom_find_wheel(metadata: Any, req: Any) -> Any:
+    if metadata.name == 'jiter':
+        known_version = Version('0.8.2')
+        if known_version in metadata.releases:
+            tag = 'cp312-cp312-emscripten_3_1_58_wasm32'
+            filename = f'{metadata.name}-{known_version}-{tag}.whl'
+            url = f'https://files.pydantic.run/{filename}'
+            return WheelInfo(
+                name=metadata.name,
+                version=known_version,
+                filename=filename,
+                build=(),
+                tags=frozenset({parse_tag(tag)}),
+                url=url,
+                parsed_url=urlparse(url),
+            )
+    return real_find_wheel(metadata, req)
+
+
+transaction.find_wheel = custom_find_wheel
 
 
 async def install_deps(files: list[File]) -> Success | Error:
@@ -84,10 +119,9 @@ async def install_deps(files: list[File]) -> Success | Error:
         if install_ssl:
             install_dependencies.append('ssl')
 
-        import micropip  # noqa
         with _micropip_logging() as logs_filename:
             try:
-                await micropip.install(install_dependencies, keep_going=True)
+                await micropip.install(install_dependencies)
                 importlib.invalidate_caches()
             except Exception:
                 with open(logs_filename) as f:
