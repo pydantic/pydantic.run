@@ -71,7 +71,7 @@ export default function () {
           <a href="https://github.com/pydantic/pydantic.run" target="_blank">
             github.com/pydantic/pydantic.run
           </a>{' '}
-          for more info. <a href="/blank">reset sandbox</a>.
+          for more info. <a href={`/blank${location.hash}`}>reset sandbox</a>.
         </aside>
       </header>
       <section>
