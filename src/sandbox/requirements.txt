@@ -1,0 +1,4 @@
+fastapi
+numpy
+pydantic
+httpx

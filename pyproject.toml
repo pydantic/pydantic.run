@@ -1,0 +1,24 @@
+[project]
+name = "python-sandbox"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = ["fastapi>=0.115.8", "httpx>=0.28.1", "numpy>=2.2.2", "pydantic>=2.10.6"]
+
+[dependency-groups]
+dev = ["pyright>=1.1.393", "ruff>=0.9.4"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+include = ["src/sandbox/src/**/*.py"]
+
+[tool.ruff.lint]
+extend-select = ["Q", "RUF100", "C90", "UP", "I"]
+flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
+isort = { combine-as-imports = true }
+mccabe = { max-complexity = 15 }
+
+[tool.ruff.format]
+quote-style = "single"

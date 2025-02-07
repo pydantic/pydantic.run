@@ -11,9 +11,10 @@
     "lint": "eslint --max-warnings=0 src/*/src && prettier --check -- .",
     "typecheck": "npm run --workspaces typecheck",
     "build": "npm run --workspace=frontend build",
-    "dev": "npm run --workspace=frontend dev",
     "cf-typegen": "npm run --workspace=backend cf-typegen",
-    "dev-backend": "npm run --workspace=backend dev"
+    "dev": "npm run --workspace=frontend dev",
+    "dev-backend": "npm run --workspace=backend dev",
+    "dev-sandbox": "npm run --workspace=sandbox dev"
   },
   "prettier": {
     "singleQuote": true,
@@ -33,6 +34,6 @@
     "prettier-plugin-toml": "^2.0.1",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.20.0",
-    "wrangler": "^3.103.2"
+    "wrangler": "^3.107.3"
   }
 }
