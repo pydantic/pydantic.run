@@ -52,6 +52,7 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
     postPrint()
     post({ kind: 'status', message: `${msg}ran code in ${asMs(execTime)}` })
   } catch (err) {
+    postPrint()
     console.warn(err)
     post({ kind: 'status', message: `${msg}Error occurred` })
     post({ kind: 'error', message: formatError(err) })
@@ -156,12 +157,13 @@ function makeTtyOps() {
   }
 }
 
-let chunks: ArrayBuffer[] = []
+let chunks: Uint8Array[] = []
 let last_post = 0
 
 function print(tty: any) {
-  if (tty.output && tty.output.length > 0) {
-    chunks.push(tty.output)
+  const output: number[] | null = tty.output
+  if (output && output.length > 0) {
+    chunks.push(new Uint8Array(output))
     tty.output = []
     const now = performance.now()
     if (now - last_post > 100) {
