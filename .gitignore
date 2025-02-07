@@ -35,3 +35,4 @@ dist-ssr
 .python-version
 *.py[cod]
 __pycache__/
+/sandbox_code.py
