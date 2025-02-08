@@ -123,10 +123,7 @@ async def prepare_env(files: list[File]) -> Success | Error:
 
         with _micropip_logging() as logs_filename:
             try:
-                # await micropip.install(install_dependencies, keep_going=True)
-                # allows a workaround for https://github.com/pyodide/micropip/issues/201
-                for dep in install_dependencies:
-                    await micropip.install(dep)
+                await micropip.install(install_dependencies, keep_going=True)
                 importlib.invalidate_caches()
             except Exception:
                 with open(logs_filename) as f:
