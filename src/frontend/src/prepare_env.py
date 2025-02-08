@@ -76,7 +76,7 @@ async def prepare_env(files: list[File]) -> Success | Error:
     sys.setrecursionlimit(400)
 
     os.environ.update(
-        OPENAI_BASE_URL='http://localhost:8000/proxy/openai',
+        OPENAI_BASE_URL='https://proxy.pydantic.run/proxy/openai',
         OPENAI_API_KEY='proxy-key',
     )
 
