@@ -75,10 +75,7 @@ async def prepare_env(files: list[File]) -> Success | Error:
 
     sys.setrecursionlimit(400)
 
-    os.environ.update(
-        OPENAI_BASE_URL='https://proxy.pydantic.run/proxy/openai',
-        OPENAI_API_KEY='proxy-key',
-    )
+    os.environ.update(OPENAI_BASE_URL='https://proxy.pydantic.run/proxy/openai', OPENAI_API_KEY='proxy-key')
 
     cwd = Path.cwd()
     for file in files:
@@ -104,22 +101,7 @@ async def prepare_env(files: list[File]) -> Success | Error:
             dependencies = await _find_import_dependencies(python_code)
 
     if dependencies:
-        # pygments seems to be required to get rich to work properly, ssl is required for FastAPI and HTTPX
-        install_pygments = False
-        install_ssl = False
-        for d in dependencies:
-            if d.startswith(('logfire', 'rich')):
-                install_pygments = True
-            elif d.startswith(('fastapi', 'httpx', 'pydantic_ai')):
-                install_ssl = True
-            if install_pygments and install_ssl:
-                break
-
-        install_dependencies = dependencies.copy()
-        if install_pygments:
-            install_dependencies.append('pygments')
-        if install_ssl:
-            install_dependencies.append('ssl')
+        install_dependencies = _add_extra_dependencies(dependencies)
 
         with _micropip_logging() as logs_filename:
             try:
@@ -154,6 +136,31 @@ async def prepare_env(files: list[File]) -> Success | Error:
     # end temporary hack for httpx debug prints
 
     return Success(message=', '.join(dependencies))
+
+
+def _add_extra_dependencies(dependencies: list[str]) -> list[str]:
+    """Add extra dependencies we know some packages need.
+
+    Workaround for micropip not installing some required transitive dependencies.
+    See https://github.com/pyodide/micropip/issues/204
+
+    pygments seems to be required to get rich to work properly, ssl is required for FastAPI and HTTPX,
+    pydantic_ai requires newest typing_extensions.
+    """
+    extras = []
+    for d in dependencies:
+        if d.startswith(('logfire', 'rich')):
+            extras.append('pygments')
+        elif d.startswith(('fastapi', 'httpx', 'pydantic_ai')):
+            extras.append('ssl')
+
+        if d.startswith('pydantic_ai'):
+            extras.append('typing_extensions>=4.12')
+
+        if len(extras) == 3:
+            break
+
+    return dependencies + extras
 
 
 @contextmanager
