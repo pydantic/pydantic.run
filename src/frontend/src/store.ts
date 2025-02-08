@@ -1,4 +1,5 @@
 import type { CodeFile } from './types'
+import defaultPythonCode from './default_code.py?raw'
 
 interface StoreHttpResponse {
   readKey: string
@@ -80,7 +81,7 @@ export async function retrieve(): Promise<InitialState> {
   const files = [
     {
       name: 'main.py',
-      content: `print('hello world')`,
+      content: defaultPythonCode,
       activeIndex: 0,
     },
   ]

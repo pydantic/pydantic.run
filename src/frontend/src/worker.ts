@@ -1,13 +1,13 @@
 /* eslint @typescript-eslint/no-explicit-any: off */
 import { loadPyodide, PyodideInterface, version as pyodideVersion } from 'pyodide'
-import installPythonCode from './install_dependencies.py?raw'
+import preparePythonEnvCode from './prepare_env.py?raw'
 import type { CodeFile, RunCode, WorkerResponse } from './types'
 
-interface InstallSuccess {
+interface PrepareSuccess {
   kind: 'success'
   message: string
 }
-interface InstallError {
+interface PrepareError {
   kind: 'error'
   message: string
 }
@@ -16,24 +16,22 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
   const { files } = data
   let msg = ''
   try {
-    const [setupTime, { pyodide, installDeps }] = await time(getPyodideEnv())
+    const [setupTime, { pyodide, preparePyEnv }] = await time(getPyodideEnv())
     if (setupTime > 50) {
       msg += `Started Python in ${asMs(setupTime)}, `
     }
     post({ kind: 'status', message: `${msg}Installing dependencies…` })
     const sys = pyodide.pyimport('sys')
 
-    const [installTime, installStatus]: [number, InstallSuccess | InstallError] = await time(
-      installDeps.install_deps(pyodide.toPy(files)),
-    )
+    const [installTime, prepareStatus] = await time(preparePyEnv.prepare_env(pyodide.toPy(files)))
     sys.stdout.flush()
     sys.stderr.flush()
-    if (installStatus.kind == 'error') {
+    if (prepareStatus.kind == 'error') {
       post({ kind: 'status', message: `${msg}Error occurred` })
-      post({ kind: 'error', message: installStatus.message })
+      post({ kind: 'error', message: prepareStatus.message })
       return
     }
-    post({ kind: 'installed', message: installStatus.message })
+    post({ kind: 'installed', message: prepareStatus.message })
     if (installTime > 50) {
       msg += `Installed dependencies in ${asMs(installTime)}, `
     }
@@ -87,14 +85,19 @@ async function time<T>(promise: Promise<T>): Promise<[number, T]> {
 
 interface PyodideEnv {
   pyodide: PyodideInterface
-  installDeps: any
+  // matches the signature of the `prepare_env` function in prepare_env.py
+  preparePyEnv: { prepare_env: (files: any) => Promise<PrepareSuccess | PrepareError> }
 }
+
+// see https://github.com/pyodide/micropip/issues/201
+const micropipV09 =
+  'https://files.pythonhosted.org/packages/27/6d/195810e3e73e5f351dc6082cada41bb4d5b0746a6804155ba6bae4304612/micropip-0.9.0-py3-none-any.whl'
 
 // we rerun this on every invocation to avoid issues with conflicting packages
 async function getPyodideEnv(): Promise<PyodideEnv> {
   const pyodide = await loadPyodide({
     indexURL: `https://cdn.jsdelivr.net/pyodide/v${pyodideVersion}/full/`,
-    packages: ['micropip'],
+    packages: [micropipV09],
   })
   const sys = pyodide.pyimport('sys')
   const pv = sys.version_info
@@ -109,12 +112,12 @@ async function getPyodideEnv(): Promise<PyodideEnv> {
   sys.path.append(dirPath)
   const pathlib = pyodide.pyimport('pathlib')
   pathlib.Path(dirPath).mkdir()
-  const moduleName = '_install_dependencies'
-  pathlib.Path(`${dirPath}/${moduleName}.py`).write_text(installPythonCode)
+  const moduleName = '_prepare_env'
+  pathlib.Path(`${dirPath}/${moduleName}.py`).write_text(preparePythonEnvCode)
 
   return {
     pyodide,
-    installDeps: pyodide.pyimport(moduleName),
+    preparePyEnv: pyodide.pyimport(moduleName),
   }
 }
 

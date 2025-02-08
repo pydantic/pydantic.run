@@ -18,17 +18,15 @@ import importlib.util
 from urllib.parse import urlparse
 
 import tomllib
-from packaging.tags import parse_tag  # noqa
-from packaging.version import Version  # noqa
 
 import micropip  # noqa
 from micropip import transaction  # noqa
-from micropip.wheelinfo import WheelInfo  # noqa
+from micropip.wheelinfo import WheelInfo, Tag, Version  # noqa
 
 from pyodide.code import find_imports  # noqa
 import pyodide_js  # noqa
 
-__all__ = ('install_deps',)
+__all__ = ('prepare_env',)
 
 
 class File(TypedDict):
@@ -49,35 +47,39 @@ class Error:
     kind: Literal['error'] = 'error'
 
 
-# This is a temporary hack to install jiter from a URL until
-# https://github.com/pyodide/pyodide/pull/5388 is released.
-real_find_wheel = transaction.find_wheel
+async def prepare_env(files: list[File]) -> Success | Error:
+    # This is a temporary hack to install jiter from a URL until
+    # https://github.com/pyodide/pyodide/pull/5388 is released.
+    real_find_wheel = transaction.find_wheel
 
+    def custom_find_wheel(metadata: Any, req: Any) -> Any:
+        if metadata.name == 'jiter':
+            known_version = Version('0.8.2')
+            if known_version in metadata.releases:
+                tag = Tag('cp312', 'cp312', 'emscripten_3_1_58_wasm32')
+                filename = f'{metadata.name}-{known_version}-{tag}.whl'
+                url = f'https://files.pydantic.run/{filename}'
+                return WheelInfo(
+                    name=metadata.name,
+                    version=known_version,
+                    filename=filename,
+                    build=(),
+                    tags=frozenset({tag}),
+                    url=url,
+                    parsed_url=urlparse(url),
+                )
+        return real_find_wheel(metadata, req)
 
-def custom_find_wheel(metadata: Any, req: Any) -> Any:
-    if metadata.name == 'jiter':
-        known_version = Version('0.8.2')
-        if known_version in metadata.releases:
-            tag = 'cp312-cp312-emscripten_3_1_58_wasm32'
-            filename = f'{metadata.name}-{known_version}-{tag}.whl'
-            url = f'https://files.pydantic.run/{filename}'
-            return WheelInfo(
-                name=metadata.name,
-                version=known_version,
-                filename=filename,
-                build=(),
-                tags=frozenset({parse_tag(tag)}),
-                url=url,
-                parsed_url=urlparse(url),
-            )
-    return real_find_wheel(metadata, req)
+    transaction.find_wheel = custom_find_wheel
+    # end `transaction.find_wheel` hack
 
-
-transaction.find_wheel = custom_find_wheel
-
-
-async def install_deps(files: list[File]) -> Success | Error:
     sys.setrecursionlimit(400)
+
+    os.environ.update(
+        OPENAI_BASE_URL='http://localhost:8000/proxy/openai',
+        OPENAI_API_KEY='proxy-key',
+    )
+
     cwd = Path.cwd()
     for file in files:
         (cwd / file['name']).write_text(file['content'])
@@ -108,7 +110,7 @@ async def install_deps(files: list[File]) -> Success | Error:
         for d in dependencies:
             if d.startswith(('logfire', 'rich')):
                 install_pygments = True
-            elif d.startswith(('fastapi', 'httpx')):
+            elif d.startswith(('fastapi', 'httpx', 'pydantic_ai')):
                 install_ssl = True
             if install_pygments and install_ssl:
                 break
@@ -121,12 +123,37 @@ async def install_deps(files: list[File]) -> Success | Error:
 
         with _micropip_logging() as logs_filename:
             try:
-                await micropip.install(install_dependencies, keep_going=True)
+                for dep in install_dependencies:
+                    # await micropip.install(dep, keep_going=True)
+                    await micropip.install(dep)
                 importlib.invalidate_caches()
             except Exception:
                 with open(logs_filename) as f:
                     logs = f.read()
                 return Error(message=f'{logs}\n{traceback.format_exc()}')
+
+    # temporary hack until the debug prints in https://github.com/encode/httpx/pull/3330 are used/merged
+    try:
+        from httpx import AsyncClient
+    except ImportError:
+        pass
+    else:
+        original_send = AsyncClient.send
+
+        def print_monkeypatch(*args, **kwargs):
+            pass
+
+        async def send_monkeypatch_print(self, *args, **kwargs):
+            import builtins
+            original_print = builtins.print
+            builtins.print = print_monkeypatch
+            try:
+                return await original_send(self, *args, **kwargs)
+            finally:
+                builtins.print = original_print
+
+        AsyncClient.send = send_monkeypatch_print
+    # end temporary hack for httpx debug prints
 
     return Success(message=', '.join(dependencies))
 
