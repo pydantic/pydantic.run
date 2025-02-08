@@ -18,17 +18,15 @@ import importlib.util
 from urllib.parse import urlparse
 
 import tomllib
-from packaging.tags import parse_tag  # noqa
-from packaging.version import Version  # noqa
 
 import micropip  # noqa
 from micropip import transaction  # noqa
-from micropip.wheelinfo import WheelInfo  # noqa
+from micropip.wheelinfo import WheelInfo, Tag, Version  # noqa
 
 from pyodide.code import find_imports  # noqa
 import pyodide_js  # noqa
 
-__all__ = ('install_deps',)
+__all__ = ('prepare_env',)
 
 
 class File(TypedDict):
@@ -49,35 +47,36 @@ class Error:
     kind: Literal['error'] = 'error'
 
 
-# This is a temporary hack to install jiter from a URL until
-# https://github.com/pyodide/pyodide/pull/5388 is released.
-real_find_wheel = transaction.find_wheel
+async def prepare_env(files: list[File]) -> Success | Error:
+    # This is a temporary hack to install jiter from a URL until
+    # https://github.com/pyodide/pyodide/pull/5388 is released.
+    real_find_wheel = transaction.find_wheel
 
+    def custom_find_wheel(metadata: Any, req: Any) -> Any:
+        if metadata.name == 'jiter':
+            known_version = Version('0.8.2')
+            if known_version in metadata.releases:
+                tag = Tag('cp312', 'cp312', 'emscripten_3_1_58_wasm32')
+                filename = f'{metadata.name}-{known_version}-{tag}.whl'
+                url = f'https://files.pydantic.run/{filename}'
+                return WheelInfo(
+                    name=metadata.name,
+                    version=known_version,
+                    filename=filename,
+                    build=(),
+                    tags=frozenset({tag}),
+                    url=url,
+                    parsed_url=urlparse(url),
+                )
+        return real_find_wheel(metadata, req)
 
-def custom_find_wheel(metadata: Any, req: Any) -> Any:
-    if metadata.name == 'jiter':
-        known_version = Version('0.8.2')
-        if known_version in metadata.releases:
-            tag = 'cp312-cp312-emscripten_3_1_58_wasm32'
-            filename = f'{metadata.name}-{known_version}-{tag}.whl'
-            url = f'https://files.pydantic.run/{filename}'
-            return WheelInfo(
-                name=metadata.name,
-                version=known_version,
-                filename=filename,
-                build=(),
-                tags=frozenset({parse_tag(tag)}),
-                url=url,
-                parsed_url=urlparse(url),
-            )
-    return real_find_wheel(metadata, req)
+    transaction.find_wheel = custom_find_wheel
+    # end `transaction.find_wheel` hack
 
-
-transaction.find_wheel = custom_find_wheel
-
-
-async def install_deps(files: list[File]) -> Success | Error:
     sys.setrecursionlimit(400)
+
+    os.environ.update(OPENAI_BASE_URL='https://proxy.pydantic.run/proxy/openai', OPENAI_API_KEY='proxy-key')
+
     cwd = Path.cwd()
     for file in files:
         (cwd / file['name']).write_text(file['content'])
@@ -102,22 +101,7 @@ async def install_deps(files: list[File]) -> Success | Error:
             dependencies = await _find_import_dependencies(python_code)
 
     if dependencies:
-        # pygments seems to be required to get rich to work properly, ssl is required for FastAPI and HTTPX
-        install_pygments = False
-        install_ssl = False
-        for d in dependencies:
-            if d.startswith(('logfire', 'rich')):
-                install_pygments = True
-            elif d.startswith(('fastapi', 'httpx')):
-                install_ssl = True
-            if install_pygments and install_ssl:
-                break
-
-        install_dependencies = dependencies.copy()
-        if install_pygments:
-            install_dependencies.append('pygments')
-        if install_ssl:
-            install_dependencies.append('ssl')
+        install_dependencies = _add_extra_dependencies(dependencies)
 
         with _micropip_logging() as logs_filename:
             try:
@@ -128,7 +112,55 @@ async def install_deps(files: list[File]) -> Success | Error:
                     logs = f.read()
                 return Error(message=f'{logs}\n{traceback.format_exc()}')
 
+    # temporary hack until the debug prints in https://github.com/encode/httpx/pull/3330 are used/merged
+    try:
+        from httpx import AsyncClient
+    except ImportError:
+        pass
+    else:
+        original_send = AsyncClient.send
+
+        def print_monkeypatch(*args, **kwargs):
+            pass
+
+        async def send_monkeypatch_print(self, *args, **kwargs):
+            import builtins
+            original_print = builtins.print
+            builtins.print = print_monkeypatch
+            try:
+                return await original_send(self, *args, **kwargs)
+            finally:
+                builtins.print = original_print
+
+        AsyncClient.send = send_monkeypatch_print
+    # end temporary hack for httpx debug prints
+
     return Success(message=', '.join(dependencies))
+
+
+def _add_extra_dependencies(dependencies: list[str]) -> list[str]:
+    """Add extra dependencies we know some packages need.
+
+    Workaround for micropip not installing some required transitive dependencies.
+    See https://github.com/pyodide/micropip/issues/204
+
+    pygments seems to be required to get rich to work properly, ssl is required for FastAPI and HTTPX,
+    pydantic_ai requires newest typing_extensions.
+    """
+    extras = []
+    for d in dependencies:
+        if d.startswith(('logfire', 'rich')):
+            extras.append('pygments')
+        elif d.startswith(('fastapi', 'httpx', 'pydantic_ai')):
+            extras.append('ssl')
+
+        if d.startswith('pydantic_ai'):
+            extras.append('typing_extensions>=4.12')
+
+        if len(extras) == 3:
+            break
+
+    return dependencies + extras
 
 
 @contextmanager
