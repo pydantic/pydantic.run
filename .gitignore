@@ -27,9 +27,12 @@ dist-ssr
 *.sln
 *.sw?
 
-# python
+# scratch files
 /scratch/
-/.venv/
-/.python-version
+
+# python
+.venv/
+.python-version
 *.py[cod]
 __pycache__/
+/sandbox_code.py

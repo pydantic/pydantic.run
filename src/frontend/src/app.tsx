@@ -52,12 +52,12 @@ export default function () {
     }
   })
 
-  async function runCode(files: CodeFile[]) {
+  async function runCode(serverSide: boolean, files: CodeFile[]) {
     setStatus('Starting Python...')
     setInstalled('')
     setOutputHtml('')
     terminalOutput = ''
-    worker!.postMessage({ files } as RunCode)
+    worker!.postMessage({ serverSide, files } as RunCode)
   }
 
   // noinspection JSUnusedAssignment
@@ -70,7 +70,7 @@ export default function () {
           <a href="https://github.com/pydantic/pydantic.run" target="_blank">
             github.com/pydantic/pydantic.run
           </a>{' '}
-          for more info. <a href="/blank">reset sandbox</a>.
+          for more info. <a href={`/blank${location.hash}`}>reset sandbox</a>.
         </aside>
       </header>
       <section>

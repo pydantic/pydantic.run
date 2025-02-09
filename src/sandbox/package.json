@@ -1,0 +1,12 @@
+{
+  "name": "sandbox",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "format": "make format",
+    "lint": "make lint",
+    "typecheck": "make typecheck",
+    "dev": "wrangler dev"
+  }
+}

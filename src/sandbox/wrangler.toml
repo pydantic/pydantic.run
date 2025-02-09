@@ -1,0 +1,9 @@
+name = "sandbox"
+main = "src/entry.py"
+compatibility_flags = ["python_workers"]
+compatibility_date = "2025-01-09"
+account_id = "d6252a570c309c113744c9e11317e271"
+workers_dev = true
+
+[env.previews]
+workers_dev = true

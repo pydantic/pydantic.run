@@ -4,7 +4,16 @@ import { createNew } from './new'
 export default {
   async fetch(request, env): Promise<Response> {
     const url = new URL(request.url)
-    if (url.pathname.startsWith('/api/')) {
+    if (url.host === 'sandbox.pydantic.run') {
+      const proxyUrl = new URL(env.SANDBOX)
+      proxyUrl.pathname = url.pathname
+      proxyUrl.search = url.search
+      return await fetch(proxyUrl, request)
+    } else if (url.pathname == '/sandbox/run/') {
+      const proxyUrl = new URL(env.SANDBOX)
+      proxyUrl.pathname = '/run/'
+      return await fetch(proxyUrl, request)
+    } else if (url.pathname.startsWith('/api/')) {
       return await api(url, request, env)
     } else if (url.pathname === '/new' || url.pathname === '/new/') {
       return await createNew(url, request, env)

@@ -10,6 +10,8 @@ on:
 
 env:
   COLUMNS: 150
+  UV_PYTHON: 3.12
+  UV_FROZEN: '1'
 
 jobs:
   lint:
@@ -18,7 +20,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
 
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
       - run: npm install
+      - run: uv sync
+        working-directory: src/sandbox
 
       - uses: pre-commit/action@v3.0.0
         with:
@@ -35,10 +43,16 @@ jobs:
       - run: npm install
 
       - uses: cloudflare/wrangler-action@v3
-        name: Test deploy
+        name: Test deploy backend
         with:
           command: deploy --dry-run
           workingDirectory: src/backend
+
+      - uses: cloudflare/wrangler-action@v3
+        name: Test deploy sandbox
+        with:
+          command: deploy --dry-run
+          workingDirectory: src/sandbox
 
   check:
     if: always()
@@ -65,12 +79,27 @@ jobs:
       - run: npm install
 
       - uses: cloudflare/wrangler-action@v3
+        name: Deploy sandbox-pydantic-run-preview
+        id: deploy_sandbox
+        with:
+          apiToken: ${{ secrets.SC_CLOUDFLARE_API_TOKEN }}
+          environment: previews
+          command: deploy --var GITHUB_SHA:${{ github.sha }}
+          workingDirectory: src/sandbox
+
+      - name: get sandbox preview URL
+        id: get_sandbox_preview_url
+        run: python .github/get_preview_url.py >> $GITHUB_OUTPUT
+        env:
+          DEPLOY_OUTPUT: ${{ steps.deploy_sandbox.outputs.command-output }}
+
+      - uses: cloudflare/wrangler-action@v3
         name: Deploy pydantic-run-preview
         id: deploy
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           environment: previews
-          command: deploy --var GITHUB_SHA:${{ github.sha }}
+          command: deploy --var GITHUB_SHA:${{ github.sha }} --var SANDBOX:${{ steps.get_sandbox_preview_url.outputs.preview_url }}
           workingDirectory: src/backend
 
       - name: get preview URL

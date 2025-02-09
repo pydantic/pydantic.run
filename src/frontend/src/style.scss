@@ -6,6 +6,7 @@ $btn-green: #28a745;
 $btn-blue: #007bff;
 $tab-hover-border: #705326;
 $mobile-limit: 800px;
+$status-color: #2490b5;
 
 html,
 body {
@@ -83,14 +84,18 @@ footer {
   display: flex;
   justify-content: space-between;
   padding: 8px 3px 0;
+  align-items: center;
 }
-.flex {
+.footer-status {
+  color: $status-color;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.footer-buttons {
   display: flex;
-}
-.middle {
-  vertical-align: middle;
-  display: inline-block;
-  margin: 10px 5px 0;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .fade {
@@ -139,7 +144,8 @@ button {
   padding-bottom: 10px;
 }
 .status {
-  color: #2490b5;
+  color: $status-color;
+  text-overflow: ellipsis;
 }
 
 .installed {
@@ -204,12 +210,16 @@ $toggle-width: 40px;
 $toggle-height: 25px;
 $toggle-padding: 2px;
 .toggle {
+  margin: 0 6px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
   .switch {
+    margin-left: 4px;
     position: relative;
     display: inline-block;
     width: $toggle-width;
     height: $toggle-height;
-    margin-top: 6px;
   }
   input {
     opacity: 0;

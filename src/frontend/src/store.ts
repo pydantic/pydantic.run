@@ -47,9 +47,8 @@ export async function store(files: CodeFile[] | null, fork: boolean = false): Pr
   } else {
     const data: StoreHttpResponse = await r.json()
     localStorage.setItem(getContentKey(data.readKey), body)
-    const path = `/store/${data.readKey}`
     localStorage.setItem(getWriteKey(data.readKey), data.writeKey)
-    history.pushState({}, '', path)
+    history.pushState({}, '', `/store/${data.readKey}${location.hash}`)
     return { message: 'New sandbox created', newSandbox: true }
   }
 }
