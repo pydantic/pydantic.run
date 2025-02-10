@@ -35,10 +35,11 @@ export default function () {
         terminalOutput += data.message
       } else if (data.kind == 'installed') {
         setInstalled(data.message.length > 0 ? `Installed dependencies: ${data.message}` : '')
+      } else if (data.kind == 'end') {
+        setRunning(false)
       } else {
         setVersions(data as Versions)
       }
-      setRunning(false)
 
       if (newTerminalOutput) {
         // escape HTML codes in the terminal output

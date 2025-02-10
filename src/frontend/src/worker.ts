@@ -51,10 +51,12 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
     sys.stderr.flush()
     postPrint()
     post({ kind: 'status', message: `${msg}ran code in ${asMs(execTime)}` })
+    post({ kind: 'end' })
   } catch (err) {
     console.warn(err)
     post({ kind: 'status', message: `${msg}Error occurred` })
     post({ kind: 'error', message: formatError(err) })
+    post({ kind: 'end' })
   }
 }
 
