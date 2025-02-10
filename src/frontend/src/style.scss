@@ -113,6 +113,11 @@ button {
     &:hover {
       background: color.adjust($btn-green, $lightness: -10%);
     }
+    &:disabled {
+      background: color.adjust($btn-green, $lightness: 20%);
+      opacity: 0.6;
+      cursor: default;
+    }
   }
   &.blue {
     background: $btn-blue;

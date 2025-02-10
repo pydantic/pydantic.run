@@ -7,9 +7,10 @@ import type { Editor } from './monacoEditor'
 
 interface EditorProps {
   runCode: (files: CodeFile[]) => void
+  running: boolean
 }
 
-export default function ({ runCode }: EditorProps) {
+export default function (props: EditorProps) {
   const [saveActive, setSaveActive] = createSignal(false)
   const [saveStatus, setSaveStatus] = createSignal('Changes not saved')
   const [showSave, setShowSave] = createSignal(false)
@@ -93,7 +94,7 @@ export default function ({ runCode }: EditorProps) {
 
   function run() {
     const files = updateFiles(editor!.getValue())
-    runCode(files)
+    props.runCode(files)
     save(files)
   }
 
@@ -187,7 +188,12 @@ export default function ({ runCode }: EditorProps) {
               </div>
             )}
             <div>
-              <button class="green" onClick={run} title="Run code in your browser and display the output">
+              <button
+                class="green"
+                onClick={run}
+                disabled={props.running}
+                title="Run code in your browser and display the output"
+              >
                 Run
               </button>
             </div>

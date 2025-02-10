@@ -22,5 +22,8 @@ export interface Versions {
   python: string
   pyodide: string
 }
+export interface EndRun {
+  kind: 'end'
+}
 
-export type WorkerResponse = Print | Message | Versions
+export type WorkerResponse = Print | Message | Versions | EndRun
