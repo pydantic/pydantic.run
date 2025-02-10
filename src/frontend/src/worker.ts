@@ -29,6 +29,7 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
     if (prepareStatus.kind == 'error') {
       post({ kind: 'status', message: `${msg}Error occurred` })
       post({ kind: 'error', message: prepareStatus.message })
+      post({ kind: 'end' })
       return
     }
     post({ kind: 'installed', message: prepareStatus.message })
@@ -49,14 +50,13 @@ self.onmessage = async ({ data }: { data: RunCode }) => {
     sys.stderr.flush()
     postPrint()
     post({ kind: 'status', message: `${msg}ran code in ${asMs(execTime)}` })
-    post({ kind: 'end' })
   } catch (err) {
     postPrint()
     console.warn(err)
     post({ kind: 'status', message: `${msg}Error occurred` })
     post({ kind: 'error', message: formatError(err) })
-    post({ kind: 'end' })
   }
+  post({ kind: 'end' })
 }
 
 function formatError(err: any): string {
