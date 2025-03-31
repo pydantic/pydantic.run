@@ -135,7 +135,7 @@ async def prepare_env(files: list[File]) -> Success | Error:
         AsyncClient.send = send_monkeypatch_print
     # end temporary hack for httpx debug prints
 
-    return Success(message=', '.join(dependencies))
+    return Success(message=', '.join(dependencies or []))
 
 
 def _add_extra_dependencies(dependencies: list[str]) -> list[str]:
@@ -147,18 +147,12 @@ def _add_extra_dependencies(dependencies: list[str]) -> list[str]:
     pygments seems to be required to get rich to work properly, ssl is required for FastAPI and HTTPX,
     pydantic_ai requires newest typing_extensions.
     """
-    extras = []
+    extras = ['ssl', 'pygments'] if dependencies else []
     for d in dependencies:
-        if d.startswith(('logfire', 'rich')):
-            extras.append('pygments')
-        elif d.startswith(('fastapi', 'httpx', 'pydantic_ai')):
-            extras.append('ssl')
+        d = d.replace('-', '_').lower()
 
         if d.startswith('pydantic_ai'):
             extras.append('typing_extensions>=4.12')
-
-        if len(extras) == 3:
-            break
 
     return dependencies + extras
 
