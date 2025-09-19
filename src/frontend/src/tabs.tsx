@@ -18,9 +18,7 @@ export function Tabs(props: TabProps) {
   function closeTab(event: MouseEvent, name: string) {
     event.stopPropagation()
     props.closeFile(name)
-    props.changeFile(
-      tabs(props.files).find((t) => t.active)?.name || props.files[0]!.name
-    )
+    props.changeFile(tabs(props.files).find((t) => t.active)?.name || props.files[0]!.name)
   }
 
   return (
