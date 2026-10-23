@@ -19,7 +19,7 @@ export async function store(files: CodeFile[] | null, fork: boolean = false): Pr
   if (readKey) {
     writeKey = localStorage.getItem(getWriteKey(readKey))
     if (writeKey && !fork) {
-      url = `/api/store/${readKey}?writeKey=${writeKey}`
+      url = `/api/store/${readKey}`
       const lastSave = localStorage.getItem(getContentKey(readKey))
       if (lastSave && lastSave == body) {
         console.debug('skipping save, no changes')
@@ -29,11 +29,13 @@ export async function store(files: CodeFile[] | null, fork: boolean = false): Pr
   }
   console.debug(writeKey ? 'saving changes' : 'creating new sandbox')
 
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (writeKey && !fork) {
+    headers['Authorization'] = `Bearer ${writeKey}`
+  }
   const r = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body,
   })
   if (!r.ok) {

@@ -17,6 +17,9 @@ binding = "BUCKET"
 directory = "../frontend/dist"
 binding = "ASSETS"
 
+[observability]
+enabled = true
+
 [env.previews]
 workers_dev = true
 routes = []
@@ -24,3 +27,6 @@ routes = []
 [[env.previews.r2_buckets]]
 bucket_name = "pydantic-run-dev"
 binding = "BUCKET"
+
+[env.previews.observability]
+enabled = true
