@@ -1,6 +1,13 @@
 import * as monaco from 'monaco-editor'
+import EditorWorker from 'monaco-editor/editor/editor.worker?worker'
 
 import type { CodeFile } from './types'
+
+// Only the editor worker is needed, built by Vite:
+// https://github.com/microsoft/monaco-editor/blob/main/docs/integrate-esm.md#using-vite
+self.MonacoEnvironment = {
+  getWorker: () => new EditorWorker(),
+}
 
 export const { KeyMod, KeyCode } = monaco
 
