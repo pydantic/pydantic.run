@@ -140,15 +140,19 @@ export default function (props: EditorProps) {
   }
 
   function closeFile(name: string) {
-    const files = setFiles((prev) => {
-      if (prev.length === 1) {
-        return prev
-      } else {
-        return prev.filter((f) => f.name !== name)
-      }
-    })
+    if (files().length === 1) {
+      return
+    }
+    // store the editor content in the active file first, so unsaved edits aren't lost
+    const prev = updateFiles(editor!.getValue())
+    const closingActive = prev.find((f) => f.name === name)?.activeIndex === findActive(prev)
+    const remaining = setFiles(prev.filter((f) => f.name !== name))
+    if (closingActive) {
+      // the editor still shows the closed file, switch it to the new active file
+      editor!.setFile(remaining.find((f) => f.activeIndex === findActive(remaining))!)
+    }
     // noinspection JSIgnoredPromiseFromCall
-    save(files)
+    save(remaining)
     editor!.focus()
   }
 
