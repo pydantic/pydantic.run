@@ -3,7 +3,7 @@
 name = "pydantic-run"
 compatibility_date = "2026-10-26"
 main = "src/index.ts"
-routes = ["pydantic.run/*"]
+routes = [{ pattern = "pydantic.run/*", zone_name = "pydantic.run" }]
 workers_dev = false
 
 [build]
