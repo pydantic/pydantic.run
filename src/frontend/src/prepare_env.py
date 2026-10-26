@@ -15,13 +15,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TypedDict, Iterable, Literal
 import importlib.util
-from urllib.parse import urlparse
 
 import tomllib
 
 import micropip  # noqa
-from micropip import transaction  # noqa
-from micropip.wheelinfo import WheelInfo, Tag, Version  # noqa
 
 from pyodide.code import find_imports  # noqa
 import pyodide_js  # noqa
@@ -48,31 +45,6 @@ class Error:
 
 
 async def prepare_env(files: list[File]) -> Success | Error:
-    # This is a temporary hack to install jiter from a URL until
-    # https://github.com/pyodide/pyodide/pull/5388 is released.
-    real_find_wheel = transaction.find_wheel
-
-    def custom_find_wheel(metadata: Any, req: Any) -> Any:
-        if metadata.name == 'jiter':
-            known_version = Version('0.8.2')
-            if known_version in metadata.releases:
-                tag = Tag('cp312', 'cp312', 'emscripten_3_1_58_wasm32')
-                filename = f'{metadata.name}-{known_version}-{tag}.whl'
-                url = f'https://files.pydantic.run/{filename}'
-                return WheelInfo(
-                    name=metadata.name,
-                    version=known_version,
-                    filename=filename,
-                    build=(),
-                    tags=frozenset({tag}),
-                    url=url,
-                    parsed_url=urlparse(url),
-                )
-        return real_find_wheel(metadata, req)
-
-    transaction.find_wheel = custom_find_wheel
-    # end `transaction.find_wheel` hack
-
     sys.setrecursionlimit(400)
 
     os.environ.update(OPENAI_BASE_URL='https://proxy.pydantic.run/proxy/openai', OPENAI_API_KEY='proxy-key')
@@ -140,10 +112,9 @@ def _add_extra_dependencies(dependencies: list[str]) -> list[str]:
     Workaround for micropip not installing some required transitive dependencies.
     See https://github.com/pyodide/micropip/issues/204
 
-    pygments seems to be required to get rich to work properly, ssl is required for FastAPI and HTTPX,
-    pydantic_ai requires newest typing_extensions.
+    pygments seems to be required to get rich to work properly, pydantic_ai requires newest typing_extensions.
     """
-    extras = ['ssl', 'pygments'] if dependencies else []
+    extras = ['pygments'] if dependencies else []
     for d in dependencies:
         d = d.replace('-', '_').lower()
 

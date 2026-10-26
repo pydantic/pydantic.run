@@ -65,8 +65,8 @@ function formatError(err: any): string {
     return `${errStr}\n\nSome browsers and platforms (like iPhones) don't support running Python, sorry.`
   }
   errStr = errStr.replace(/^PythonError: +/, '')
-  // remove frames from inside pyodide
-  errStr = errStr.replace(/ {2}File "\/lib\/python\d+\.zip\/_pyodide\/.*\n {4}.*\n(?: {4,}\^+\n)?/g, '')
+  // remove frames from inside pyodide, including multi-line source snippets (`...<N lines>...`) and caret lines
+  errStr = errStr.replace(/ {2}File "\/lib\/python\d+\.zip\/_pyodide\/.*\n(?: {4}.*\n)*/g, '')
   return errStr
 }
 
@@ -91,15 +91,11 @@ interface PyodideEnv {
   preparePyEnv: { prepare_env: (files: any) => Promise<PrepareSuccess | PrepareError> }
 }
 
-// see https://github.com/pyodide/micropip/issues/201
-const micropipV09 =
-  'https://files.pythonhosted.org/packages/27/6d/195810e3e73e5f351dc6082cada41bb4d5b0746a6804155ba6bae4304612/micropip-0.9.0-py3-none-any.whl'
-
 // we rerun this on every invocation to avoid issues with conflicting packages
 async function getPyodideEnv(): Promise<PyodideEnv> {
   const pyodide = await loadPyodide({
     indexURL: `https://cdn.jsdelivr.net/pyodide/v${pyodideVersion}/full/`,
-    packages: [micropipV09],
+    packages: ['micropip'],
   })
   const sys = pyodide.pyimport('sys')
   const pv = sys.version_info
