@@ -1,7 +1,7 @@
 export const MAX_FILE_SIZE = 1024 * 10
 
 export async function api(url: URL, request: Request, env: Env): Promise<Response> {
-  const { pathname, searchParams } = url
+  const { pathname } = url
   const readKey = pathname.split('/')[3]
   if (request.method === 'GET') {
     return await get(readKey, env)
@@ -24,7 +24,7 @@ export async function api(url: URL, request: Request, env: Env): Promise<Respons
   if (readKey === 'new') {
     return await storeNew(body, env)
   } else {
-    return await storeExisting(body, readKey, searchParams, env)
+    return await storeExisting(body, readKey, request.headers, env)
   }
 }
 
@@ -53,8 +53,9 @@ async function storeNew(body: Blob, env: Env): Promise<Response> {
   })
 }
 
-async function storeExisting(body: Blob, readKey: string, search: URLSearchParams, env: Env): Promise<Response> {
-  const writeKey = search.get('writeKey')
+async function storeExisting(body: Blob, readKey: string, headers: Headers, env: Env): Promise<Response> {
+  // The write key goes in a header and not in the URL, because Workers Logs records the request URL.
+  const writeKey = headers.get('authorization')?.match(/^Bearer (.+)$/)?.[1]
   if (!writeKey) {
     return new Response('Unauthorized - no writeKey', { status: 401 })
   }
