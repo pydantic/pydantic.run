@@ -11,12 +11,11 @@
   },
   "dependencies": {
     "ansi-to-html": "^0.7.2",
-    "monaco-editor": "^0.52.2",
-    "pyodide": "^0.27.2",
+    "monaco-editor": "^0.57.0",
+    "pyodide": "^314.0.7",
     "sass-embedded": "^1.106.1",
-    "solid-js": "^1.9.4",
+    "solid-js": "^1.9.17",
     "vite": "^8.3.5",
-    "vite-plugin-monaco-editor-esm": "^2.0.3",
     "vite-plugin-solid": "^2.11.14"
   }
 }

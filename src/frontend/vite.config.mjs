@@ -1,6 +1,4 @@
 import { createLogger, defineConfig } from 'vite'
-// vite-plugin-monaco-editor-esm avoids a warning from monaco about workers not working
-import monacoEditorEsmPlugin from 'vite-plugin-monaco-editor-esm'
 import solidPlugin from 'vite-plugin-solid'
 
 const customLogger = createLogger()
@@ -14,12 +12,7 @@ customLogger.warn = (msg, options) => {
 }
 
 export default defineConfig({
-  plugins: [
-    monacoEditorEsmPlugin({
-      languageWorkers: ['editorWorkerService'],
-    }),
-    solidPlugin(),
-  ],
+  plugins: [solidPlugin()],
   worker: {
     format: 'es',
   },
