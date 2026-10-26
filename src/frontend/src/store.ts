@@ -6,7 +6,7 @@ interface StoreHttpResponse {
   writeKey: string
 }
 
-interface StoreResult {
+export interface StoreResult {
   message: string
   newSandbox: boolean
 }

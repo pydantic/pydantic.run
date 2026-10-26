@@ -10,9 +10,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-
-    "types": ["@cloudflare/workers-types"]
+    "noUncheckedSideEffectImports": true
   },
   "include": ["src", "worker-configuration.d.ts"]
 }
