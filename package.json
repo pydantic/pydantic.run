@@ -24,15 +24,24 @@
     "bracketSpacing": true,
     "plugins": [
       "prettier-plugin-toml"
+    ],
+    "overrides": [
+      {
+        "files": "*.toml",
+        "options": {
+          "singleQuote": false
+        }
+      }
     ]
   },
   "dependencies": {
-    "@cloudflare/workers-types": "^4.20250109.0",
-    "@eslint/js": "^9.18.0",
-    "prettier": "^3.4.2",
-    "prettier-plugin-toml": "^2.0.1",
-    "typescript": "~5.6.2",
-    "typescript-eslint": "^8.20.0",
-    "wrangler": "^3.103.2"
+    "@eslint/js": "^10.0.1",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "eslint": "^10.13.0",
+    "prettier": "^3.9.10",
+    "prettier-plugin-toml": "^4.1.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "typescript-eslint": "^8.72.0",
+    "wrangler": "^4.152.0"
   }
 }

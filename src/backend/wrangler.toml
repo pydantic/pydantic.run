@@ -1,4 +1,5 @@
 #:schema node_modules/wrangler/config-schema.json
+
 name = "pydantic-run"
 compatibility_date = "2025-01-09"
 main = "src/index.ts"

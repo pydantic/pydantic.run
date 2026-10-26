@@ -16,6 +16,8 @@ export default function () {
   const [versions, setVersions] = createSignal<Versions | null>(null)
   let terminalOutput = ''
   let worker: Worker
+  // assigned by Solid's `ref={outputRef}` below, which ESLint can't see
+  // eslint-disable-next-line no-unassigned-vars
   let outputRef!: HTMLPreElement
 
   onMount(async () => {

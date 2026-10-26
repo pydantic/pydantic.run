@@ -1,7 +1,7 @@
 import { onMount, createSignal, Show } from 'solid-js'
 
 import type { CodeFile } from './types'
-import { retrieve, store } from './store.ts'
+import { retrieve, store, type StoreResult } from './store.ts'
 import { Tabs, findActive } from './tabs'
 import type { Editor } from './monacoEditor'
 
@@ -56,7 +56,7 @@ export default function (props: EditorProps) {
     if (!saveActive()) {
       return
     }
-    let result = null
+    let result: StoreResult | null
     try {
       result = await store(files, fork)
     } catch (err) {
