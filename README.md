@@ -2,7 +2,7 @@
 
 Python browser sandbox based on [Pyodide](https://pyodide.org). Write and share Python code, run it in the browser.
 
-Built to demonstrate [Pydantic](https://docs.pydantic.dev), [PydanticAI](https://ai.pydantic.dev), and [Pydantic Logfire](https://docs.pydantic.dev/logfire).
+Built to demonstrate [Pydantic](https://pydantic.dev/docs/validation/latest/get-started/), [Pydantic AI](https://pydantic.dev/docs/ai/overview/), and [Pydantic Logfire](https://pydantic.dev/docs/logfire/get-started/).
 
 If you choose to save code, it's stored in CloudFlare's R2 object storage, and should be available for one year.
 
